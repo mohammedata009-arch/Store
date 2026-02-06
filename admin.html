@@ -2,42 +2,81 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة محمد طه</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحكم المركزي | محمد طه عطا المنان</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family:'Cairo'; background:#ecf0f1; padding:20px; text-align: right; }
-        .card { background:#fff; padding:20px; border-radius:15px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-        input, button { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ddd; box-sizing: border-box; }
-        button { background:#3498db; color:#fff; border:none; cursor:pointer; font-weight:700; }
-        table { width:100%; border-collapse:collapse; margin-top:10px; }
-        th, td { padding:10px; border:1px solid #eee; text-align:center; }
-        h2 { color: #2c3e50; margin-top: 0; }
+        :root { --admin-bg: #1a1a2e; --card-bg: #ffffff; --primary: #3498db; }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 50px; }
+        .admin-header { background: var(--admin-bg); color: white; padding: 25px; text-align: center; border-bottom: 4px solid var(--primary); }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
+        .btn-add { background: #27ae60; color: white; }
+        .btn-ad { background: #f39c12; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        .delete-btn { color: #e74c3c; cursor: pointer; font-weight: bold; border: none; background: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>📢 إعلان عام للمشتركين</h2>
-        <input id="ad-txt" placeholder="اكتب نص الإعلان هنا">
-        <button onclick="sendAd(true)">تفعيل الإعلان</button>
-        <button style="background:gray" onclick="sendAd(false)">إخفاء الإعلان</button>
+
+<div class="admin-header">
+    <h2 style="margin:0;">لوحة تحكم النظام | محمد طه عطا المنان</h2>
+    <small>إدارة التراخيص والمراقبة السحابية</small>
+</div>
+
+<div class="container">
+    <div class="stat-grid">
+        <div class="stat-card">
+            <small>عدد المشتركين</small>
+            <h2 id="total-users">0</h2>
+        </div>
+        <div class="stat-card">
+            <small>الإعلان العام</small>
+            <h4 id="ad-status" style="color:red">متوقف</h4>
+        </div>
     </div>
 
     <div class="card">
-        <h2>🔑 إضافة مشترك (دكان) جديد</h2>
-        <input id="s-n" placeholder="اسم صاحب الدكان">
-        <input id="s-c" placeholder="كود التفعيل (مثلاً: Taha01)">
-        <button style="background:#2ecc71" onclick="addS()">اعتماد المشترك</button>
+        <h3>📢 بث إعلان عاجل للمحلات</h3>
+        <input type="text" id="ad-msg" placeholder="اكتب نص التنبيه الذي سيظهر للجميع...">
+        <div style="display: flex; gap:10px;">
+            <button class="btn btn-ad" onclick="setAd(true)">تفعيل البث</button>
+            <button class="btn" style="background:#bdc3c7;" onclick="setAd(false)">إيقاف البث</button>
+        </div>
     </div>
 
     <div class="card">
-        <h2>🏪 قائمة الدكاكين المفعلة</h2>
-        <div id="list">جاري تحميل البيانات...</div>
+        <h3>🔑 إنشاء ترخيص جديد</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input type="text" id="new-code" placeholder="كود الدخول">
+            <input type="text" id="store-name" placeholder="اسم المحل">
+        </div>
+        <button class="btn btn-add" onclick="createAccount()">اعتماد الترخيص وتفعيل الحساب</button>
     </div>
+
+    <div class="card" style="overflow-x: auto;">
+        <h3>👥 المحلات المفعلة</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>اسم المحل</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="user-list"></tbody>
+        </table>
+    </div>
+</div>
 
 <script>
-    // بيانات مشروعك Store-project المستخرجة من الصورة
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
@@ -48,48 +87,71 @@
         appId: "1:561530737705:web:beefb32c081f9bf8b53838"
     };
 
-    // بدء تشغيل Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const database = firebase.database();
 
-    // وظيفة إرسال الإعلان
-    function sendAd(status) {
-        const text = document.getElementById('ad-txt').value;
-        db.ref('global_ads').set({
-            text: text,
-            active: status
-        }).then(() => {
-            alert("تم تحديث الإعلان بنجاح!");
+    // تشغيل المزامنة الفورية
+    function init() {
+        // تحديث قائمة المستخدمين
+        database.ref('activations').on('value', snapshot => {
+            const data = snapshot.val() || {};
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
+            let count = 0;
+            for(let key in data) {
+                count++;
+                list.innerHTML += `
+                    <tr>
+                        <td><b>${key}</b></td>
+                        <td>${data[key].name}</td>
+                        <td><button class="delete-btn" onclick="revoke('${key}')">سحب الترخيص</button></td>
+                    </tr>
+                `;
+            }
+            document.getElementById('total-users').innerText = count;
+        });
+
+        // تحديث حالة الإعلان
+        database.ref('global_ads').on('value', snapshot => {
+            const ad = snapshot.val();
+            const statusLabel = document.getElementById('ad-status');
+            if(ad && ad.active) {
+                statusLabel.innerText = "نشط الآن";
+                statusLabel.style.color = "#27ae60";
+            } else {
+                statusLabel.innerText = "متوقف";
+                statusLabel.style.color = "red";
+            }
         });
     }
 
-    // وظيفة إضافة مشترك جديد
-    function addS() {
-        const name = document.getElementById('s-n').value;
-        const code = document.getElementById('s-c').value;
-        if(name && code) {
-            db.ref('activations/' + code).set({
-                name: name,
-                active: true
-            }).then(() => {
-                alert("تم تفعيل كود المشترك بنجاح");
-                document.getElementById('s-n').value = "";
-                document.getElementById('s-c').value = "";
-            });
-        } else {
-            alert("يرجى ملء البيانات أولاً");
+    function createAccount() {
+        const code = document.getElementById('new-code').value;
+        const name = document.getElementById('store-name').value;
+        if(!code || !name) return alert("يرجى ملء البيانات");
+
+        database.ref('activations/' + code).set({ name: name }).then(() => {
+            alert("تم تفعيل الحساب بنجاح");
+            document.getElementById('new-code').value = '';
+            document.getElementById('store-name').value = '';
+        });
+    }
+
+    function revoke(code) {
+        if(confirm("هل أنت متأكد من سحب الترخيص؟ سيتم إغلاق النظام عند هذا المستخدم فوراً.")) {
+            database.ref('activations/' + code).remove();
         }
     }
 
-    // عرض المشتركين في جدول وتحديثه تلقائياً
-    db.ref('activations').on('value', snapshot => {
-        let html = '<table><tr><th>اسم الدكان</th><th>كود التفعيل</th></tr>';
-        snapshot.forEach(child => {
-            html += `<tr><td>${child.val().name}</td><td>${child.key}</td></tr>`;
-        });
-        html += '</table>';
-        document.getElementById('list').innerHTML = html;
-    });
+    function setAd(status) {
+        const msg = document.getElementById('ad-msg').value;
+        database.ref('global_ads').set({
+            active: status,
+            text: msg
+        }).then(() => alert(status ? "تم تفعيل الإعلان" : "تم إيقاف الإعلان"));
+    }
+
+    init();
 </script>
 </body>
 </html>
