@@ -2,29 +2,29 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم العليا</title>
+    <title>إدارة الأنظمة | محمد طه</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family:'Cairo'; background:#111827; color:#fff; padding:20px; text-align:center; }
-        .box { background:#1f2937; padding:20px; border-radius:12px; max-width:500px; margin:20px auto; border:1px solid #374151; }
-        input { width:90%; padding:10px; margin:10px 0; border-radius:6px; border:none; }
-        button { background:#10b981; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; }
-        table { width:100%; margin-top:20px; border-collapse:collapse; }
-        td, th { padding:12px; border-bottom:1px solid #374151; }
+        body { font-family:'Cairo'; background:#0f172a; color:#fff; padding:20px; text-align:center; }
+        .box { background:#1e293b; padding:25px; border-radius:15px; max-width:400px; margin:20px auto; border:1px solid #334155; }
+        input { width:90%; padding:12px; margin:10px 0; border-radius:8px; border:none; }
+        button { background:#3b82f6; color:#fff; padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; width:95%; }
+        table { width:100%; margin-top:20px; border-collapse: collapse; }
+        th, td { padding:12px; border-bottom:1px solid #334155; }
     </style>
 </head>
 <body>
-    <h1>إدارة نظام محمد طه</h1>
+    <h1>التحكم المركزي | محمد طه</h1>
     <div class="box">
-        <h3>إنشاء ترخيص محل</h3>
-        <input type="text" id="c" placeholder="كود التفعيل">
+        <h3>تفعيل حساب جديد</h3>
+        <input type="text" id="c" placeholder="كود التفعيل (أرقام)">
         <input type="text" id="n" placeholder="اسم المحل">
-        <button onclick="add()">تفعيل الحساب</button>
+        <button onclick="add()">إصدار الكود ✅</button>
     </div>
     <div class="box">
-        <h3>المحلات المسجلة</h3>
+        <h3>المحلات النشطة</h3>
         <table id="list"></table>
     </div>
     <script>
@@ -32,25 +32,30 @@
             apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
             authDomain: "store-project-b023e.firebaseapp.com",
             databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-            projectId: "store-project-b023e",
-            storageBucket: "store-project-b023e.firebasestorage.app",
-            messagingSenderId: "561530737705",
-            appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+            projectId: "store-project-b023e"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
         function add() {
-            const code = document.getElementById('c').value, name = document.getElementById('n').value;
-            if(code && name) db.ref('activations/'+code).set({name: name}).then(()=>location.reload());
+            const c = document.getElementById('c').value, n = document.getElementById('n').value;
+            if(c && n) {
+                db.ref('activations/'+c).set({name: n}).then(()=>{ 
+                    alert("تم تفعيل المحل"); 
+                    document.getElementById('c').value=''; document.getElementById('n').value=''; 
+                });
+            } else alert("أكمل البيانات");
         }
+
         db.ref('activations').on('value', s => {
             const data = s.val(); const table = document.getElementById('list');
             table.innerHTML = '<tr><th>الكود</th><th>المحل</th><th>إجراء</th></tr>';
             for(let k in data) {
-                table.innerHTML += `<tr><td>${k}</td><td>${data[k].name}</td><td><button style="background:#ef4444" onclick="del('${k}')">حذف</button></td></tr>`;
+                table.innerHTML += `<tr><td>${k}</td><td>${data[k].name}</td><td><button style="background:#ef4444; width:auto;" onclick="del('${k}')">حذف</button></td></tr>`;
             }
         });
-        function del(k) { if(confirm("حذف الحساب؟")) db.ref('activations/'+k).remove(); }
+
+        function del(k) { if(confirm("إيقاف المحل؟")) db.ref('activations/'+k).remove(); }
     </script>
 </body>
 </html>
