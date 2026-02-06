@@ -2,156 +2,55 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التحكم المركزي | محمد طه عطا المنان</title>
+    <title>لوحة التحكم العليا</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --admin-bg: #1a1a2e; --card-bg: #ffffff; --primary: #3498db; }
-        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 50px; }
-        .admin-header { background: var(--admin-bg); color: white; padding: 25px; text-align: center; border-bottom: 4px solid var(--primary); }
-        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Cairo'; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
-        .btn-add { background: #27ae60; color: white; }
-        .btn-ad { background: #f39c12; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        .delete-btn { color: #e74c3c; cursor: pointer; font-weight: bold; border: none; background: none; }
+        body { font-family:'Cairo'; background:#111827; color:#fff; padding:20px; text-align:center; }
+        .box { background:#1f2937; padding:20px; border-radius:12px; max-width:500px; margin:20px auto; border:1px solid #374151; }
+        input { width:90%; padding:10px; margin:10px 0; border-radius:6px; border:none; }
+        button { background:#10b981; color:#fff; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; }
+        table { width:100%; margin-top:20px; border-collapse:collapse; }
+        td, th { padding:12px; border-bottom:1px solid #374151; }
     </style>
 </head>
 <body>
-
-<div class="admin-header">
-    <h2 style="margin:0;">لوحة تحكم النظام | محمد طه عطا المنان</h2>
-    <small>إدارة التراخيص والمراقبة السحابية</small>
-</div>
-
-<div class="container">
-    <div class="stat-grid">
-        <div class="stat-card">
-            <small>عدد المشتركين</small>
-            <h2 id="total-users">0</h2>
-        </div>
-        <div class="stat-card">
-            <small>الإعلان العام</small>
-            <h4 id="ad-status" style="color:red">متوقف</h4>
-        </div>
+    <h1>إدارة نظام محمد طه</h1>
+    <div class="box">
+        <h3>إنشاء ترخيص محل</h3>
+        <input type="text" id="c" placeholder="كود التفعيل">
+        <input type="text" id="n" placeholder="اسم المحل">
+        <button onclick="add()">تفعيل الحساب</button>
     </div>
-
-    <div class="card">
-        <h3>📢 بث إعلان عاجل للمحلات</h3>
-        <input type="text" id="ad-msg" placeholder="اكتب نص التنبيه الذي سيظهر للجميع...">
-        <div style="display: flex; gap:10px;">
-            <button class="btn btn-ad" onclick="setAd(true)">تفعيل البث</button>
-            <button class="btn" style="background:#bdc3c7;" onclick="setAd(false)">إيقاف البث</button>
-        </div>
+    <div class="box">
+        <h3>المحلات المسجلة</h3>
+        <table id="list"></table>
     </div>
-
-    <div class="card">
-        <h3>🔑 إنشاء ترخيص جديد</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="text" id="new-code" placeholder="كود الدخول">
-            <input type="text" id="store-name" placeholder="اسم المحل">
-        </div>
-        <button class="btn btn-add" onclick="createAccount()">اعتماد الترخيص وتفعيل الحساب</button>
-    </div>
-
-    <div class="card" style="overflow-x: auto;">
-        <h3>👥 المحلات المفعلة</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>الكود</th>
-                    <th>اسم المحل</th>
-                    <th>إجراء</th>
-                </tr>
-            </thead>
-            <tbody id="user-list"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
-        authDomain: "store-project-b023e.firebaseapp.com",
-        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-        projectId: "store-project-b023e",
-        storageBucket: "store-project-b023e.firebasestorage.app",
-        messagingSenderId: "561530737705",
-        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
-    // تشغيل المزامنة الفورية
-    function init() {
-        // تحديث قائمة المستخدمين
-        database.ref('activations').on('value', snapshot => {
-            const data = snapshot.val() || {};
-            const list = document.getElementById('user-list');
-            list.innerHTML = '';
-            let count = 0;
-            for(let key in data) {
-                count++;
-                list.innerHTML += `
-                    <tr>
-                        <td><b>${key}</b></td>
-                        <td>${data[key].name}</td>
-                        <td><button class="delete-btn" onclick="revoke('${key}')">سحب الترخيص</button></td>
-                    </tr>
-                `;
-            }
-            document.getElementById('total-users').innerText = count;
-        });
-
-        // تحديث حالة الإعلان
-        database.ref('global_ads').on('value', snapshot => {
-            const ad = snapshot.val();
-            const statusLabel = document.getElementById('ad-status');
-            if(ad && ad.active) {
-                statusLabel.innerText = "نشط الآن";
-                statusLabel.style.color = "#27ae60";
-            } else {
-                statusLabel.innerText = "متوقف";
-                statusLabel.style.color = "red";
-            }
-        });
-    }
-
-    function createAccount() {
-        const code = document.getElementById('new-code').value;
-        const name = document.getElementById('store-name').value;
-        if(!code || !name) return alert("يرجى ملء البيانات");
-
-        database.ref('activations/' + code).set({ name: name }).then(() => {
-            alert("تم تفعيل الحساب بنجاح");
-            document.getElementById('new-code').value = '';
-            document.getElementById('store-name').value = '';
-        });
-    }
-
-    function revoke(code) {
-        if(confirm("هل أنت متأكد من سحب الترخيص؟ سيتم إغلاق النظام عند هذا المستخدم فوراً.")) {
-            database.ref('activations/' + code).remove();
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
+            authDomain: "store-project-b023e.firebaseapp.com",
+            databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
+            projectId: "store-project-b023e",
+            storageBucket: "store-project-b023e.firebasestorage.app",
+            messagingSenderId: "561530737705",
+            appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        function add() {
+            const code = document.getElementById('c').value, name = document.getElementById('n').value;
+            if(code && name) db.ref('activations/'+code).set({name: name}).then(()=>location.reload());
         }
-    }
-
-    function setAd(status) {
-        const msg = document.getElementById('ad-msg').value;
-        database.ref('global_ads').set({
-            active: status,
-            text: msg
-        }).then(() => alert(status ? "تم تفعيل الإعلان" : "تم إيقاف الإعلان"));
-    }
-
-    init();
-</script>
+        db.ref('activations').on('value', s => {
+            const data = s.val(); const table = document.getElementById('list');
+            table.innerHTML = '<tr><th>الكود</th><th>المحل</th><th>إجراء</th></tr>';
+            for(let k in data) {
+                table.innerHTML += `<tr><td>${k}</td><td>${data[k].name}</td><td><button style="background:#ef4444" onclick="del('${k}')">حذف</button></td></tr>`;
+            }
+        });
+        function del(k) { if(confirm("حذف الحساب؟")) db.ref('activations/'+k).remove(); }
+    </script>
 </body>
 </html>
