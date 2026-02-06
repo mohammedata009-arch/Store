@@ -3,88 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام دكان محمد طه</title>
+    <title>نظام محمد طه - الإصدار النهائي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --p:#27ae60; --s:#2c3e50; --bg:#f4f7f6; --err:#e74c3c; }
-        body { font-family:'Cairo', sans-serif; background:var(--bg); margin:0; padding-bottom:80px; }
+        :root { --p:#27ae60; --s:#2c3e50; --bg:#f4f7f6; --err:#e74c3c; --gold:#f1c40f; }
+        body { font-family:'Cairo', sans-serif; background:var(--bg); margin:0; padding-top:35px; padding-bottom:70px; }
         .container { padding:15px; max-width:500px; margin:auto; display:none; }
-        .card { background:#fff; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-        input, select { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-top:8px; font-family:'Cairo'; font-size:16px; }
-        .btn { width:100%; padding:12px; border:none; border-radius:8px; color:#fff; font-weight:700; cursor:pointer; font-family:'Cairo'; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .card { background:#fff; border-radius:12px; padding:15px; margin-bottom:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        input, select { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-top:8px; font-family:'Cairo'; font-size:16px; box-sizing: border-box; }
+        .btn { width:100%; padding:12px; border:none; border-radius:8px; color:#fff; font-weight:700; cursor:pointer; font-family:'Cairo'; margin-top:10px; transition: 0.2s; }
         .btn-p { background:var(--p); } .btn-s { background:var(--s); } .btn-err { background:var(--err); }
-        .tabs { position:fixed; bottom:0; width:100%; background:white; display:flex; border-top:1px solid #ddd; height:65px; }
-        .tab { flex:1; border:none; background:none; font-family:'Cairo'; color:#7f8c8d; font-size:11px; cursor:pointer; }
+        .ticker-wrap { width: 100%; overflow: hidden; background: #1a202c; color: var(--gold); height: 35px; line-height: 35px; position: fixed; top: 0; z-index: 2000; font-size: 12px; }
+        .ticker-move { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker 25s linear infinite; }
+        @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+        #lock-screen { position:fixed; inset:0; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+        .tabs { position:fixed; bottom:0; width:100%; background:white; display:flex; border-top:1px solid #ddd; height:60px; z-index:1000; }
+        .tab { flex:1; border:none; background:none; font-family:'Cairo'; color:#7f8c8d; font-size:12px; cursor:pointer; }
         .tab.active { color:var(--p); border-top:3px solid var(--p); font-weight:bold; }
-        #lock-screen { position:fixed; inset:0; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; }
         .page { display:none; } .page.active { display:block; }
     </style>
 </head>
 <body>
 
+<div id="ticker-bar" class="ticker-wrap no-print" style="display:none">
+    <div id="ticker-text" class="ticker-move">جاري تحميل نظام محمد طه الرقمي...</div>
+</div>
+
 <div id="lock-screen">
-    <h2>🏪 نظام محمد طه الرقمي</h2>
-    <input type="password" id="acc-code" style="text-align:center; max-width:300px" placeholder="أدخل كود التفعيل">
-    <button class="btn btn-p" style="max-width:300px" onclick="verify()">دخول 🔓</button>
+    <h2>🏪 نظام محمد طه</h2>
+    <input type="password" id="acc-code" style="text-align:center; max-width:300px" placeholder="كود تفعيل المحل">
+    <button class="btn btn-p" style="max-width:300px" onclick="verify()">دخول آمن 🔓</button>
 </div>
 
 <div id="app" class="container">
     <div id="print-area">
+        <div id="pdf-header" style="display:none; text-align:center; border-bottom:2px solid #333; margin-bottom:20px;">
+            <h2 id="pdf-title"></h2>
+            <p>التاريخ: <span id="pdf-date"></span></p>
+        </div>
         <div id="pg-home" class="page active">
             <div class="card" style="background:var(--s); color:white; text-align:center;">
                 <h3 id="st-name">تحميل...</h3>
-                <small>صافي ربح اليوم</small>
-                <h1 id="net-profit">0.00 ج</h1>
+                <small>صافي الربح اليوم</small>
+                <h1 id="net-profit">0.00</h1>
             </div>
-            <div class="card" style="display:flex; justify-content:space-around; text-align:center;">
-                <div><small>المبيعات</small><h4 id="total-sales" style="color:var(--p)">0</h4></div>
-                <div><small>المصروفات</small><h4 id="total-exp" style="color:var(--err)">0</h4></div>
-            </div>
-            <div class="card">
-                <h4>📊 جرد المخزن</h4>
-                <p>قيمة الشراء (رأس المال): <b id="stock-buy">0</b></p>
-                <p>قيمة البيع المتوقعة: <b id="stock-sell">0</b></p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="card" style="text-align:center;"><small>المبيعات</small><h3 id="total-sales" style="color:var(--p)">0</h3></div>
+                <div class="card" style="text-align:center;"><small>المصروفات</small><h3 id="total-exp" style="color:var(--err)">0</h3></div>
             </div>
         </div>
     </div>
 
     <div id="pg-sell" class="page">
         <div class="card">
-            <h4>🧾 عملية بيع</h4>
-            <input type="text" id="p-search" placeholder="بحث عن صنف..." onkeyup="filterP()">
+            <h4>🧾 واجهة البيع</h4>
+            <input type="text" id="p-search" placeholder="بحث عن منتج..." onkeyup="filterP()">
             <select id="p-sel" onchange="updPrice()" size="4"></select>
             <input type="number" id="p-qty" placeholder="الكمية">
-            <input type="text" id="p-prc" placeholder="السعر" readonly style="background:#f9f9f9">
-            <button class="btn btn-p" onclick="doSell()">تأكيد العملية ✅</button>
+            <input type="text" id="p-prc" placeholder="السعر" readonly style="background:#eee">
+            <button class="btn btn-p" onclick="doSell()">إتمام البيع ✅</button>
         </div>
         <div class="card">
-            <h4>💸 مصروفات / خسائر</h4>
+            <h4>💸 تسجيل مصروف</h4>
             <input type="text" id="ex-n" placeholder="البيان">
             <input type="number" id="ex-a" placeholder="المبلغ">
-            <button class="btn btn-err" onclick="addEx()">خصم من الأرباح 🔻</button>
+            <button class="btn btn-err" onclick="addEx()">خصم من الصندوق 🔻</button>
         </div>
-        <button class="btn btn-s" onclick="makePDF()">تصدير تقرير PDF 📄</button>
+        <button class="btn btn-s" onclick="makePDF()">تصدير فاتورة PDF</button>
     </div>
 
     <div id="pg-stock" class="page">
         <div class="card">
-            <h4>📦 إضافة بضاعة</h4>
+            <h4>📦 المخزن</h4>
             <input type="text" id="in-n" placeholder="اسم الصنف">
             <input type="number" id="in-b" placeholder="سعر الشراء">
             <input type="number" id="in-s" placeholder="سعر البيع">
             <input type="number" id="in-q" placeholder="الكمية">
-            <button class="btn btn-p" onclick="addStock()">حفظ ☁️</button>
+            <button class="btn btn-p" onclick="addStock()">إضافة / تحديث</button>
         </div>
         <div id="inventory-list"></div>
+        <button class="btn btn-err" style="margin-top:20px" onclick="resetAccounting()">تصفير مبيعات اليوم</button>
     </div>
 </div>
 
-<nav class="tabs" id="nav-bar" style="display:none">
+<nav class="tabs no-print" id="nav-bar" style="display:none">
     <button class="tab active" onclick="nav('pg-home', this)">🏠 الرئيسية</button>
-    <button class="tab" onclick="nav('pg-sell', this)">🧾 العمليات</button>
+    <button class="tab" onclick="nav('pg-sell', this)">🧾 المبيعات</button>
     <button class="tab" onclick="nav('pg-stock', this)">📦 المخزن</button>
 </nav>
 
@@ -93,14 +100,11 @@
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
         databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-        projectId: "store-project-b023e",
-        storageBucket: "store-project-b023e.firebasestorage.app",
-        messagingSenderId: "561530737705",
-        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+        projectId: "store-project-b023e"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let inv = []; let sls = []; let exp = [];
+    let inv = [], sls = [], exp = [];
     const sid = localStorage.getItem('sid');
 
     function verify() {
@@ -109,7 +113,7 @@
             if(s.exists()){
                 localStorage.setItem('auth','true'); localStorage.setItem('sid',c);
                 localStorage.setItem('sname', s.val().name); location.reload();
-            } else alert("كود تفعيل غير صحيح");
+            } else alert("كود تفعيل خاطئ");
         });
     }
 
@@ -122,9 +126,16 @@
     }
 
     function sync() {
-        db.ref('stores/'+sid+'/inventory').on('value', s => { inv = s.val() || []; renderInv(); filterP(); });
-        db.ref('stores/'+sid+'/sales').on('value', s => { sls = s.val() || []; calc(); });
-        db.ref('stores/'+sid+'/expenses').on('value', s => { exp = s.val() || []; calc(); });
+        db.ref('stores/'+sid+'/inventory').on('value', s => { inv = s.val() || []; renderInv(); filterP(); updTicker(); });
+        db.ref('stores/'+sid+'/sales').on('value', s => { sls = s.val() || []; calc(); updTicker(); });
+        db.ref('stores/'+sid+'/expenses').on('value', s => { exp = s.val() || []; calc(); updTicker(); });
+    }
+
+    function updTicker() {
+        const p = document.getElementById('net-profit').innerText;
+        const low = inv.filter(x => x.qty <= 3).map(x => x.name).join(', ');
+        document.getElementById('ticker-text').innerText = `🚀 المتجر: ${localStorage.getItem('sname')} | 💰 الربح الصافي: ${p} ج ${low ? ' | ⚠️ نواقص: '+low : ''}`;
+        document.getElementById('ticker-bar').style.display = 'block';
     }
 
     function filterP() {
@@ -135,59 +146,55 @@
 
     function updPrice() {
         const i = document.getElementById('p-sel').value;
-        if(i!=="") document.getElementById('p-prc').value = inv[i].sell + " ج";
+        if(i!=="") document.getElementById('p-prc').value = (inv[i].sell || 0) + " ج";
     }
 
     function doSell() {
-        const i = document.getElementById('p-sel').value, q = +document.getElementById('p-qty').value;
-        if(i==="" || q<=0) return alert("أدخل بيانات صحيحة");
+        const i = document.getElementById('p-sel').value, q = parseInt(document.getElementById('p-qty').value);
+        if(i==="" || isNaN(q) || q<=0) return alert("أدخل بيانات صحيحة");
         let itm = inv[i];
         if(itm.qty < q) return alert("الكمية غير كافية");
-        const profit = (itm.sell - itm.buy) * q;
-        sls.push({ name: itm.name, q:q, p:profit, total: itm.sell * q, date: new Date().toLocaleDateString('en-GB') });
+        sls.push({ name: itm.name, q:q, p:((itm.sell||0)-(itm.buy||0))*q, total: (itm.sell||0)*q, date: new Date().toLocaleDateString('en-GB') });
         itm.qty -= q;
         db.ref('stores/'+sid).update({ inventory: inv, sales: sls });
+        document.getElementById('p-qty').value = '';
         alert("تم البيع");
     }
 
     function addEx() {
-        const n = document.getElementById('ex-n').value, a = +document.getElementById('ex-a').value;
-        if(n && a>0) {
-            exp.push({ name:n, amt:a, date:new Date().toLocaleDateString('en-GB') });
-            db.ref('stores/'+sid+'/expenses').set(exp);
-            alert("تم الخصم");
-        }
+        const n = document.getElementById('ex-n').value, a = parseFloat(document.getElementById('ex-a').value);
+        if(n && !isNaN(a)) { exp.push({ name:n, amt:a, date:new Date().toLocaleDateString('en-GB') }); db.ref('stores/'+sid+'/expenses').set(exp); }
     }
 
     function calc() {
         const today = new Date().toLocaleDateString('en-GB');
         const sT = sls.filter(x => x.date === today);
         const eT = exp.filter(x => x.date === today);
-        const tS = sT.reduce((a,b) => a + b.total, 0);
-        const tP = sT.reduce((a,b) => a + b.p, 0);
-        const tE = eT.reduce((a,b) => a + b.amt, 0);
+        const tS = sT.reduce((a,b) => a + (b.total || 0), 0), tP = sT.reduce((a,b) => a + (b.p || 0), 0), tE = eT.reduce((a,b) => a + (b.amt || 0), 0);
         document.getElementById('total-sales').innerText = tS.toFixed(2);
         document.getElementById('total-exp').innerText = tE.toFixed(2);
-        document.getElementById('net-profit').innerText = (tP - tE).toFixed(2) + " ج";
+        document.getElementById('net-profit').innerText = (tP - tE).toFixed(2);
     }
 
     function renderInv() {
-        let bV = 0, sV = 0, h = '';
-        inv.forEach(x => {
-            bV += (x.buy * x.qty); sV += (x.sell * x.qty);
-            h += `<div class="card" style="margin-bottom:5px"><b>${x.name}</b> (${x.qty})</div>`;
+        let h = '<h4>📦 البضاعة الحالية</h4>';
+        inv.forEach((x, i) => {
+            h += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${x.name}</b> <br> <small>كمية: ${x.qty} | سعر: ${x.sell}</small></div>
+                <button onclick="delI(${i})" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
+            </div>`;
         });
-        document.getElementById('stock-buy').innerText = bV;
-        document.getElementById('stock-sell').innerText = sV;
         document.getElementById('inventory-list').innerHTML = h;
     }
 
+    function delI(i) { if(confirm("حذف؟")) { inv.splice(i,1); db.ref('stores/'+sid+'/inventory').set(inv); } }
+
     function addStock() {
-        const n=document.getElementById('in-n').value, b=+document.getElementById('in-b').value, s=+document.getElementById('in-s').value, q=+document.getElementById('in-q').value;
-        if(n && !isNaN(b)) {
-            inv.push({ name:n, buy:b, sell:s, qty:q });
-            db.ref('stores/'+sid+'/inventory').set(inv);
-        }
+        const n=document.getElementById('in-n').value, b=parseFloat(document.getElementById('in-b').value), s=parseFloat(document.getElementById('in-s').value), q=parseInt(document.getElementById('in-q').value);
+        if(!n || isNaN(b)) return alert("أكمل البيانات");
+        const ex = inv.findIndex(x => x.name === n);
+        if(ex !== -1) { inv[ex].qty += q; inv[ex].buy=b; inv[ex].sell=s; } else { inv.push({name:n, buy:b, sell:s, qty:q}); }
+        db.ref('stores/'+sid+'/inventory').set(inv).then(() => { alert("تم الحفظ"); document.querySelectorAll('#pg-stock input').forEach(i=>i.value=''); });
     }
 
     function nav(id, btn) {
@@ -197,9 +204,13 @@
     }
 
     function makePDF() {
-        const el = document.getElementById('print-area');
-        html2pdf().from(el).set({ margin:1, filename:'تقرير.pdf' }).save();
+        const header = document.getElementById('pdf-header'); header.style.display='block';
+        document.getElementById('pdf-title').innerText = "تقرير: " + localStorage.getItem('sname');
+        document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('ar-EG');
+        html2pdf().from(document.getElementById('print-area')).set({ margin:0.5, filename:'تقرير.pdf' }).save().then(() => header.style.display='none');
     }
+
+    function resetAccounting() { if(confirm("مسح حسابات اليوم؟")) { db.ref('stores/'+sid+'/sales').remove(); db.ref('stores/'+sid+'/expenses').remove(); location.reload(); } }
 </script>
 </body>
 </html>
