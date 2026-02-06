@@ -2,60 +2,67 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة الأنظمة | محمد طه</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>M-TAHA Master Admin</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family:'Cairo'; background:#0f172a; color:#fff; padding:20px; text-align:center; }
-        .box { background:#1e293b; padding:25px; border-radius:15px; max-width:400px; margin:20px auto; border:1px solid #334155; }
-        input { width:90%; padding:12px; margin:10px 0; border-radius:8px; border:none; }
-        button { background:#3b82f6; color:#fff; padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; width:95%; }
-        table { width:100%; margin-top:20px; border-collapse: collapse; }
-        th, td { padding:12px; border-bottom:1px solid #334155; }
+        body { font-family: 'Cairo', sans-serif; background: #2c3e50; color: white; padding: 20px; }
+        .card { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: black; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        button { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
-    <h1>التحكم المركزي | محمد طه</h1>
-    <div class="box">
-        <h3>تفعيل حساب جديد</h3>
-        <input type="text" id="c" placeholder="كود التفعيل (أرقام)">
-        <input type="text" id="n" placeholder="اسم المحل">
-        <button onclick="add()">إصدار الكود ✅</button>
-    </div>
-    <div class="box">
-        <h3>المحلات النشطة</h3>
-        <table id="list"></table>
-    </div>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
-            authDomain: "store-project-b023e.firebaseapp.com",
-            databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-            projectId: "store-project-b023e"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
 
-        function add() {
-            const c = document.getElementById('c').value, n = document.getElementById('n').value;
-            if(c && n) {
-                db.ref('activations/'+c).set({name: n}).then(()=>{ 
-                    alert("تم تفعيل المحل"); 
-                    document.getElementById('c').value=''; document.getElementById('n').value=''; 
-                });
-            } else alert("أكمل البيانات");
+    <h1>👑 لوحة تحكم المدير (محمد طه)</h1>
+
+    <div class="card">
+        <h3>📢 إعلان عام للتطبيقات</h3>
+        <input type="text" id="news" style="width:70%; padding:10px;">
+        <button style="background:green" onclick="setNews()">تحديث</button>
+    </div>
+
+    <div class="card">
+        <h3>⌛ طلبات تفعيل جديدة</h3>
+        <div id="req-list"></div>
+    </div>
+
+    <div class="card">
+        <h3>📊 مراقبة المتاجر والديون</h3>
+        <div id="mon-list"></div>
+    </div>
+
+<script>
+    const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(cfg); const db = firebase.database();
+
+    function setNews() { db.ref('admin_news').set(document.getElementById('news').value); }
+
+    db.ref('requests').on('value', s => {
+        let h = '<table><tr><th>الاسم</th><th>الهاتف</th><th>الحالة</th><th>إجراء</th></tr>';
+        const d = s.val();
+        for(let id in d) {
+            h += `<tr><td>${d[id].name}</td><td>${d[id].phone}</td><td>${d[id].status}</td>
+            <td><button style="background:green" onclick="act('${id}')">تفعيل</button></td></tr>`;
         }
+        document.getElementById('req-list').innerHTML = h + '</table>';
+    });
 
-        db.ref('activations').on('value', s => {
-            const data = s.val(); const table = document.getElementById('list');
-            table.innerHTML = '<tr><th>الكود</th><th>المحل</th><th>إجراء</th></tr>';
-            for(let k in data) {
-                table.innerHTML += `<tr><td>${k}</td><td>${data[k].name}</td><td><button style="background:#ef4444; width:auto;" onclick="del('${k}')">حذف</button></td></tr>`;
-            }
-        });
+    function act(id) { db.ref('requests/'+id).update({status:'active'}); }
 
-        function del(k) { if(confirm("إيقاف المحل؟")) db.ref('activations/'+k).remove(); }
-    </script>
+    db.ref('stores').on('value', s => {
+        let h = '<table><tr><th>المتجر ID</th><th>بضائع</th><th>ديون</th><th>أرباح</th></tr>';
+        const d = s.val();
+        for(let id in d) {
+            const st = d[id];
+            const inv = st.inventory ? st.inventory.length : 0;
+            const deb = st.debtors ? st.debtors.reduce((a,b)=>a+b.balance,0) : 0;
+            const pro = st.sales ? st.sales.reduce((a,b)=>a+b.profit,0) : 0;
+            h += `<tr><td>${id}</td><td>${inv}</td><td>${deb}</td><td>${pro}</td></tr>`;
+        }
+        document.getElementById('mon-list').innerHTML = h + '</table>';
+    });
+</script>
 </body>
 </html>
