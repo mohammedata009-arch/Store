@@ -1,66 +1,50 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة الأدمن - M-TAHA</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<style>
-body { font-family:sans-serif; background:#ecf0f1; padding:20px; }
-.card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-input,button { padding:10px; margin:5px 0; font-size:16px; }
-button { cursor:pointer; background:#27ae60; color:white; border:none; border-radius:8px;}
-</style>
+    <meta charset="UTF-8">
+    <title>إدارة M-TAHA - محمد طه</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #2c3e50; color: white; direction: rtl; padding: 20px; }
+        .card { background: white; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-act { background: #27ae60; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
+        .btn-del { background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; margin-right: 5px; }
+    </style>
 </head>
 <body>
+    <h1>👑 لوحة التحكم العليا</h1>
+    <div id="list"></div>
 
-<h2>لوحة الأدمن</h2>
+    <script>
+        const firebaseConfig = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-<div class="card">
-    <h3>شريط الإعلان</h3>
-    <input type="text" id="banner-input" placeholder="اكتب إعلان اليوم">
-    <button onclick="updateBanner()">تحديث الإعلان</button>
-</div>
+        db.ref('requests').on('value', s => {
+            const data = s.val();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            for(let id in data) {
+                list.innerHTML += `
+                    <div class="card">
+                        <div><b>${data[id].name}</b> (${id}) <br> الحالة: ${data[id].status}</div>
+                        <div>
+                            ${data[id].status !== 'active' ? `<button class="btn-act" onclick="activate('${id}')">تفعيل ✅</button>` : ''}
+                            <button class="btn-del" onclick="deleteStore('${id}')">حذف نهائي ❌</button>
+                        </div>
+                    </div>`;
+            }
+        });
 
-<div class="card">
-    <h3>إدارة المتاجر</h3>
-    <input type="text" id="shop-id" placeholder="معرف المتجر">
-    <button onclick="activateShop()">تفعيل المتجر</button>
-    <button onclick="deleteShop()">حذف بيانات المتجر</button>
-</div>
-
-<script>
-const firebaseConfig={databaseURL:"https://YOUR-PROJECT-ID.firebaseio.com"};
-firebase.initializeApp(firebaseConfig);
-const rdb=firebase.database();
-
-// تحديث شريط الإعلان
-function updateBanner(){
-    const msg=document.getElementById('banner-input').value.trim();
-    if(!msg)return alert("اكتب رسالة");
-    rdb.ref('admin/banner').set(msg);
-    alert("تم التحديث ✅");
-}
-
-// تفعيل متجر
-function activateShop(){
-    const id=document.getElementById('shop-id').value.trim();
-    if(!id)return alert("اكتب المعرف");
-    rdb.ref('requests/'+id).update({status:'active'});
-    alert("تم تفعيل المتجر ✅");
-}
-
-// حذف بيانات متجر
-function deleteShop(){
-    const id=document.getElementById('shop-id').value.trim();
-    if(!id)return alert("اكتب المعرف");
-    if(confirm("سيتم حذف جميع بيانات المتجر!")){
-        rdb.ref('stores/'+id).remove();
-        rdb.ref('requests/'+id).remove();
-        alert("تم المسح ✅");
-    }
-}
-</script>
+        function activate(id) { db.ref('requests/'+id).update({ status: 'active' }); }
+        
+        function deleteStore(id) {
+            if(confirm("هل أنت متأكد من حذف المتجر وبياناته تماماً؟")) {
+                db.ref('requests/'+id).remove();
+                db.ref('stores/'+id).remove();
+            }
+        }
+    </script>
 </body>
 </html>
