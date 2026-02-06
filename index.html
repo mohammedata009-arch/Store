@@ -2,215 +2,158 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام محمد طه - الإصدار النهائي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>M-TAHA Pro v100</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --p:#27ae60; --s:#2c3e50; --bg:#f4f7f6; --err:#e74c3c; --gold:#f1c40f; }
-        body { font-family:'Cairo', sans-serif; background:var(--bg); margin:0; padding-top:35px; padding-bottom:70px; }
-        .container { padding:15px; max-width:500px; margin:auto; display:none; }
-        .card { background:#fff; border-radius:12px; padding:15px; margin-bottom:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-        input, select { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-top:8px; font-family:'Cairo'; font-size:16px; box-sizing: border-box; }
-        .btn { width:100%; padding:12px; border:none; border-radius:8px; color:#fff; font-weight:700; cursor:pointer; font-family:'Cairo'; margin-top:10px; transition: 0.2s; }
-        .btn-p { background:var(--p); } .btn-s { background:var(--s); } .btn-err { background:var(--err); }
-        .ticker-wrap { width: 100%; overflow: hidden; background: #1a202c; color: var(--gold); height: 35px; line-height: 35px; position: fixed; top: 0; z-index: 2000; font-size: 12px; }
-        .ticker-move { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker 25s linear infinite; }
-        @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-        #lock-screen { position:fixed; inset:0; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
-        .tabs { position:fixed; bottom:0; width:100%; background:white; display:flex; border-top:1px solid #ddd; height:60px; z-index:1000; }
-        .tab { flex:1; border:none; background:none; font-family:'Cairo'; color:#7f8c8d; font-size:12px; cursor:pointer; }
-        .tab.active { color:var(--p); border-top:3px solid var(--p); font-weight:bold; }
-        .page { display:none; } .page.active { display:block; }
+        :root { --p: #6c5ce7; --s: #00cec9; --bg: #e0e5ec; --txt: #2d3436; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; user-select: none; }
+        header { background: var(--p); color: white; padding: 45px 20px 25px; border-radius: 0 0 30px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .container { padding: 15px; max-width: 500px; margin: auto; display: none; }
+        .v-card { background: var(--bg); border-radius: 25px; padding: 20px; box-shadow: 9px 9px 16px #bebebe, -9px -9px 16px #ffffff; margin-top: -40px; text-align: center; }
+        .radar { width: 140px; height: 140px; border-radius: 50%; background: var(--bg); box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff; margin: 0 auto 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 3px solid var(--s); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .box { padding: 12px; border-radius: 15px; color: white; font-size: 14px; font-weight: bold; }
+        .v-input { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 12px; background: var(--bg); box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff; text-align: center; font-family: 'Cairo'; }
+        .v-btn { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--p); color: white; font-weight: 900; cursor: pointer; margin-top: 10px; }
+        nav { position: fixed; bottom: 15px; left: 15px; right: 15px; background: #2d3436; height: 65px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 2000; }
+        .n-link { color: #636e72; background: none; border: none; font-family: 'Cairo'; font-size: 12px; font-weight: bold; }
+        .n-link.active { color: white; transform: translateY(-3px); transition: 0.3s; }
+        #lock { position: fixed; inset: 0; background: var(--p); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .page { display: none; animation: fade 0.3s ease; } .page.active { display: block; }
+        @keyframes fade { from {opacity:0} to {opacity:1} }
     </style>
 </head>
 <body>
 
-<div id="ticker-bar" class="ticker-wrap no-print" style="display:none">
-    <div id="ticker-text" class="ticker-move">جاري تحميل نظام محمد طه الرقمي...</div>
+<div id="lock">
+    <div style="font-size: 50px;">💎</div>
+    <h2 style="margin: 10px 0 20px;">M-TAHA v100</h2>
+    <input type="password" id="pass" class="v-input" style="max-width:260px; background:white;" placeholder="كود تفعيل المحل">
+    <button class="v-btn" style="max-width:260px; background:white; color:var(--p)" onclick="verify()">دخول النظام</button>
 </div>
 
-<div id="lock-screen">
-    <h2>🏪 نظام محمد طه</h2>
-    <input type="password" id="acc-code" style="text-align:center; max-width:300px" placeholder="كود تفعيل المحل">
-    <button class="btn btn-p" style="max-width:300px" onclick="verify()">دخول آمن 🔓</button>
-</div>
+<header id="h" style="display:none">
+    <div><small>المتجر:</small><h3 id="sn" style="margin:0">..</h3></div>
+    <button onclick="logout()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:8px; padding:5px 12px; font-family:'Cairo'; font-size:12px;">خروج</button>
+</header>
 
-<div id="app" class="container">
-    <div id="print-area">
-        <div id="pdf-header" style="display:none; text-align:center; border-bottom:2px solid #333; margin-bottom:20px;">
-            <h2 id="pdf-title"></h2>
-            <p>التاريخ: <span id="pdf-date"></span></p>
-        </div>
-        <div id="pg-home" class="page active">
-            <div class="card" style="background:var(--s); color:white; text-align:center;">
-                <h3 id="st-name">تحميل...</h3>
-                <small>صافي الربح اليوم</small>
-                <h1 id="net-profit">0.00</h1>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="card" style="text-align:center;"><small>المبيعات</small><h3 id="total-sales" style="color:var(--p)">0</h3></div>
-                <div class="card" style="text-align:center;"><small>المصروفات</small><h3 id="total-exp" style="color:var(--err)">0</h3></div>
+<div class="container" id="main">
+    <div id="p1" class="page active">
+        <div class="v-card">
+            <div class="radar"><small>صافي الربح</small><h2 id="net-p" style="margin:0">0</h2></div>
+            <div class="grid">
+                <div class="box" style="background:#00b894">مبيعات اليوم<br><span id="val-s">0</span></div>
+                <div class="box" style="background:#0984e3">قيمة المخزن<br><span id="val-i">0</span></div>
+                <div class="box" style="background:#f1c40f">ديون اليوم<br><span id="val-d">0</span></div>
+                <div class="box" style="background:#e84393" onclick="window.print()">🖨️ طباعة</div>
             </div>
         </div>
     </div>
 
-    <div id="pg-sell" class="page">
-        <div class="card">
-            <h4>🧾 واجهة البيع</h4>
-            <input type="text" id="p-search" placeholder="بحث عن منتج..." onkeyup="filterP()">
-            <select id="p-sel" onchange="updPrice()" size="4"></select>
-            <input type="number" id="p-qty" placeholder="الكمية">
-            <input type="text" id="p-prc" placeholder="السعر" readonly style="background:#eee">
-            <button class="btn btn-p" onclick="doSell()">إتمام البيع ✅</button>
+    <div id="p2" class="page">
+        <div class="v-card" style="margin-top:10px">
+            <h4 style="margin:0 0 10px">🧾 فاتورة سريعة</h4>
+            <input type="text" id="srch" class="v-input" placeholder="ابحث عن صنف..." onkeyup="f()">
+            <select id="plist" class="v-input"></select>
+            <input type="number" id="qty" class="v-input" placeholder="الكمية">
+            <div class="grid">
+                <button class="v-btn" style="background:#00b894; margin:0" onclick="sell(false)">كاش ✅</button>
+                <button class="v-btn" style="background:#f1c40f; margin:0" onclick="sell(true)">دين 🤝</button>
+            </div>
         </div>
-        <div class="card">
-            <h4>💸 تسجيل مصروف</h4>
-            <input type="text" id="ex-n" placeholder="البيان">
-            <input type="number" id="ex-a" placeholder="المبلغ">
-            <button class="btn btn-err" onclick="addEx()">خصم من الصندوق 🔻</button>
-        </div>
-        <button class="btn btn-s" onclick="makePDF()">تصدير فاتورة PDF</button>
     </div>
 
-    <div id="pg-stock" class="page">
-        <div class="card">
-            <h4>📦 المخزن</h4>
-            <input type="text" id="in-n" placeholder="اسم الصنف">
-            <input type="number" id="in-b" placeholder="سعر الشراء">
-            <input type="number" id="in-s" placeholder="سعر البيع">
-            <input type="number" id="in-q" placeholder="الكمية">
-            <button class="btn btn-p" onclick="addStock()">إضافة / تحديث</button>
+    <div id="p3" class="page">
+        <div class="v-card" style="margin-top:10px">
+            <h4>📦 تحديث المخزون</h4>
+            <input type="text" id="in-n" class="v-input" placeholder="اسم المنتج">
+            <input type="number" id="in-b" class="v-input" placeholder="سعر الشراء">
+            <input type="number" id="in-s" class="v-input" placeholder="سعر البيع">
+            <input type="number" id="in-q" class="v-input" placeholder="الكمية المضافة">
+            <button class="v-btn" onclick="add()">حفظ في المخزن</button>
         </div>
-        <div id="inventory-list"></div>
-        <button class="btn btn-err" style="margin-top:20px" onclick="resetAccounting()">تصفير مبيعات اليوم</button>
+        <div id="stk-l" style="margin-top: 20px;"></div>
     </div>
 </div>
 
-<nav class="tabs no-print" id="nav-bar" style="display:none">
-    <button class="tab active" onclick="nav('pg-home', this)">🏠 الرئيسية</button>
-    <button class="tab" onclick="nav('pg-sell', this)">🧾 المبيعات</button>
-    <button class="tab" onclick="nav('pg-stock', this)">📦 المخزن</button>
+<nav id="n" style="display:none">
+    <button class="n-link active" onclick="tab('p1',this)">📊 الرئيسية</button>
+    <button class="n-link" onclick="tab('p2',this)">🧾 البيع</button>
+    <button class="n-link" onclick="tab('p3',this)">📦 المخزن</button>
 </nav>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
-        authDomain: "store-project-b023e.firebaseapp.com",
-        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-        projectId: "store-project-b023e"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let inv = [], sls = [], exp = [];
-    const sid = localStorage.getItem('sid');
+    const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(cfg); const db = firebase.database();
+    let inv=[], sls=[], sid=localStorage.getItem('sid');
 
-    function verify() {
-        const c = document.getElementById('acc-code').value;
-        db.ref('activations/'+c).once('value', s => {
-            if(s.exists()){
-                localStorage.setItem('auth','true'); localStorage.setItem('sid',c);
-                localStorage.setItem('sname', s.val().name); location.reload();
-            } else alert("كود تفعيل خاطئ");
+    function verify(){
+        const k=document.getElementById('pass').value;
+        db.ref('activations/'+k).once('value', s=>{
+            if(s.exists()){ localStorage.setItem('auth','1'); localStorage.setItem('sid',k); localStorage.setItem('sn',s.val().name); location.reload(); }
+            else alert("الكود غير صحيح!");
         });
     }
 
-    if(localStorage.getItem('auth')) {
-        document.getElementById('lock-screen').style.display='none';
-        document.getElementById('app').style.display='block';
-        document.getElementById('nav-bar').style.display='flex';
-        document.getElementById('st-name').innerText = localStorage.getItem('sname');
-        sync();
-    }
-
-    function sync() {
-        db.ref('stores/'+sid+'/inventory').on('value', s => { inv = s.val() || []; renderInv(); filterP(); updTicker(); });
-        db.ref('stores/'+sid+'/sales').on('value', s => { sls = s.val() || []; calc(); updTicker(); });
-        db.ref('stores/'+sid+'/expenses').on('value', s => { exp = s.val() || []; calc(); updTicker(); });
-    }
-
-    function updTicker() {
-        const p = document.getElementById('net-profit').innerText;
-        const low = inv.filter(x => x.qty <= 3).map(x => x.name).join(', ');
-        document.getElementById('ticker-text').innerText = `🚀 المتجر: ${localStorage.getItem('sname')} | 💰 الربح الصافي: ${p} ج ${low ? ' | ⚠️ نواقص: '+low : ''}`;
-        document.getElementById('ticker-bar').style.display = 'block';
-    }
-
-    function filterP() {
-        const q = document.getElementById('p-search').value.toLowerCase();
-        const sel = document.getElementById('p-sel'); sel.innerHTML = '';
-        inv.forEach((x, i) => { if(x.name.toLowerCase().includes(q)) sel.innerHTML += `<option value="${i}">${x.name} (${x.qty})</option>`; });
-    }
-
-    function updPrice() {
-        const i = document.getElementById('p-sel').value;
-        if(i!=="") document.getElementById('p-prc').value = (inv[i].sell || 0) + " ج";
-    }
-
-    function doSell() {
-        const i = document.getElementById('p-sel').value, q = parseInt(document.getElementById('p-qty').value);
-        if(i==="" || isNaN(q) || q<=0) return alert("أدخل بيانات صحيحة");
-        let itm = inv[i];
-        if(itm.qty < q) return alert("الكمية غير كافية");
-        sls.push({ name: itm.name, q:q, p:((itm.sell||0)-(itm.buy||0))*q, total: (itm.sell||0)*q, date: new Date().toLocaleDateString('en-GB') });
-        itm.qty -= q;
-        db.ref('stores/'+sid).update({ inventory: inv, sales: sls });
-        document.getElementById('p-qty').value = '';
-        alert("تم البيع");
-    }
-
-    function addEx() {
-        const n = document.getElementById('ex-n').value, a = parseFloat(document.getElementById('ex-a').value);
-        if(n && !isNaN(a)) { exp.push({ name:n, amt:a, date:new Date().toLocaleDateString('en-GB') }); db.ref('stores/'+sid+'/expenses').set(exp); }
-    }
-
-    function calc() {
-        const today = new Date().toLocaleDateString('en-GB');
-        const sT = sls.filter(x => x.date === today);
-        const eT = exp.filter(x => x.date === today);
-        const tS = sT.reduce((a,b) => a + (b.total || 0), 0), tP = sT.reduce((a,b) => a + (b.p || 0), 0), tE = eT.reduce((a,b) => a + (b.amt || 0), 0);
-        document.getElementById('total-sales').innerText = tS.toFixed(2);
-        document.getElementById('total-exp').innerText = tE.toFixed(2);
-        document.getElementById('net-profit').innerText = (tP - tE).toFixed(2);
-    }
-
-    function renderInv() {
-        let h = '<h4>📦 البضاعة الحالية</h4>';
-        inv.forEach((x, i) => {
-            h += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div><b>${x.name}</b> <br> <small>كمية: ${x.qty} | سعر: ${x.sell}</small></div>
-                <button onclick="delI(${i})" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
-            </div>`;
+    if(localStorage.getItem('auth')){
+        document.getElementById('lock').style.display='none'; document.getElementById('h').style.display='flex'; document.getElementById('main').style.display='block'; document.getElementById('n').style.display='flex';
+        document.getElementById('sn').innerText=localStorage.getItem('sn');
+        db.ref('stores/'+sid).on('value', s=>{ 
+            const d=s.val()||{}; inv=d.inventory||[]; sls=d.sales||[]; u(); render(); 
         });
-        document.getElementById('inventory-list').innerHTML = h;
     }
 
-    function delI(i) { if(confirm("حذف؟")) { inv.splice(i,1); db.ref('stores/'+sid+'/inventory').set(inv); } }
+    function u(){
+        const day = new Date().toLocaleDateString('en-GB');
+        const sT = sls.filter(x => x.date === day);
+        const cash = sT.filter(x=>!x.isD).reduce((a,b)=>a+b.total,0);
+        const prof = sT.filter(x=>!x.isD).reduce((a,b)=>a+b.p,0);
+        const debt = sT.filter(x=>x.isD).reduce((a,b)=>a+b.total,0);
+        const stkv = inv.reduce((a,b)=>a+(b.buy*b.qty),0);
+        document.getElementById('net-p').innerText=prof.toFixed(1); 
+        document.getElementById('val-s').innerText=cash; 
+        document.getElementById('val-d').innerText=debt;
+        document.getElementById('val-i').innerText=stkv.toFixed(0); f();
+    }
 
-    function addStock() {
+    function sell(isD){
+        const i=document.getElementById('plist').value, q=parseInt(document.getElementById('qty').value);
+        if(i===""||isNaN(q)||q<=0) return alert("خطأ في البيانات");
+        let itm=inv[i]; if(itm.qty < q) return alert("الكمية غير كافية!");
+        itm.qty-=q;
+        sls.push({name:itm.name, total:itm.sell*q, p:(itm.sell-itm.buy)*q, isD:isD, date:new Date().toLocaleDateString('en-GB')});
+        db.ref('stores/'+sid).update({inventory:inv, sales:sls}).then(()=> { document.getElementById('qty').value=''; alert("تمت العملية"); });
+    }
+
+    function add(){
         const n=document.getElementById('in-n').value, b=parseFloat(document.getElementById('in-b').value), s=parseFloat(document.getElementById('in-s').value), q=parseInt(document.getElementById('in-q').value);
         if(!n || isNaN(b)) return alert("أكمل البيانات");
-        const ex = inv.findIndex(x => x.name === n);
-        if(ex !== -1) { inv[ex].qty += q; inv[ex].buy=b; inv[ex].sell=s; } else { inv.push({name:n, buy:b, sell:s, qty:q}); }
-        db.ref('stores/'+sid+'/inventory').set(inv).then(() => { alert("تم الحفظ"); document.querySelectorAll('#pg-stock input').forEach(i=>i.value=''); });
+        const idx = inv.findIndex(x=>x.name===n);
+        if(idx!==-1){ inv[idx].qty+=q; inv[idx].buy=b; inv[idx].sell=s; } else { inv.push({name:n, buy:b, sell:s, qty:q}); }
+        db.ref('stores/'+sid+'/inventory').set(inv).then(()=> { document.querySelectorAll('#p3 input').forEach(i=>i.value=''); alert("تم الحفظ"); });
     }
 
-    function nav(id, btn) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active'); btn.classList.add('active');
+    function f(){
+        const q=document.getElementById('srch').value.toLowerCase(), s=document.getElementById('plist'); s.innerHTML='';
+        inv.forEach((x,i)=> { if(x.name.toLowerCase().includes(q)) s.innerHTML+=`<option value="${i}">${x.name} (${x.qty})</option>`; });
     }
 
-    function makePDF() {
-        const header = document.getElementById('pdf-header'); header.style.display='block';
-        document.getElementById('pdf-title').innerText = "تقرير: " + localStorage.getItem('sname');
-        document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('ar-EG');
-        html2pdf().from(document.getElementById('print-area')).set({ margin:0.5, filename:'تقرير.pdf' }).save().then(() => header.style.display='none');
+    function render(){
+        let h=''; inv.forEach((x,i)=>{ h+=`<div class="v-card" style="margin-top:10px; padding:10px; display:flex; justify-content:space-between; align-items:center; font-size:14px;"><b>${x.name}</b><span>${x.qty} ق</span><button onclick="del(${i})" style="color:red; background:none; border:none; font-size:18px;">🗑️</button></div>`; });
+        document.getElementById('stk-l').innerHTML=h;
     }
 
-    function resetAccounting() { if(confirm("مسح حسابات اليوم؟")) { db.ref('stores/'+sid+'/sales').remove(); db.ref('stores/'+sid+'/expenses').remove(); location.reload(); } }
+    function tab(id,b){ 
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
+        document.querySelectorAll('.n-link').forEach(l=>l.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); b.classList.add('active');
+    }
+    function logout(){ if(confirm("خروج من النظام؟")) { localStorage.clear(); location.reload(); } }
+    function del(i){ if(confirm("حذف الصنف نهائياً؟")) { inv.splice(i,1); db.ref('stores/'+sid+'/inventory').set(inv); } }
 </script>
 </body>
 </html>
