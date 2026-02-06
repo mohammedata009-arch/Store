@@ -3,91 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام إدارة المحلات - محمد طه عطا المنان</title>
+    <title>نظام دكان محمد طه الرقمي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --p:#27ae60; --s:#2c3e50; --bg:#f4f7f6; --err:#e74c3c; --warn:#f39c12; }
-        body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:100px; }
+        body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:80px; }
         .container { padding:15px; max-width:500px; margin:auto; display:none; }
-        .card { background:#fff; border-radius:15px; padding:15px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.05); position: relative; }
+        .card { background:#fff; border-radius:15px; padding:15px; margin-bottom:15px; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
         
-        /* شاشة القفل */
+        /* واجهة الدخول */
         #lock-screen { position:fixed; inset:0; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; }
         .login-input { width:100%; max-width:300px; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; font-family:'Cairo'; text-align:center; font-size:18px; outline:none; }
         
         input, select { width:100%; padding:12px; border:2px solid #edf2f7; border-radius:10px; margin-top:8px; box-sizing:border-box; font-family:'Cairo'; outline:none; font-size:16px; }
-        
         .btn { width:100%; padding:15px; border:none; border-radius:10px; color:#fff; font-weight:700; cursor:pointer; font-family:'Cairo'; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; }
         .btn-p { background:var(--p); } .btn-s { background:var(--s); } .btn-err { background:var(--err); }
         
         .tabs { position:fixed; bottom:0; width:100%; background:white; display:flex; border-top:1px solid #ddd; z-index:1000; height:70px; }
-        .tab { flex:1; border:none; background:none; font-family:'Cairo'; color:#7f8c8d; cursor:pointer; font-size:11px; }
+        .tab { flex:1; border:none; background:none; font-family:'Cairo'; color:#7f8c8d; cursor:pointer; font-size:12px; }
         .tab.active { color:var(--p); font-weight:bold; border-top:3px solid var(--p); }
         
-        /* حقوق الملكية في الأسفل */
-        .rights-footer { text-align: center; font-size: 10px; color: #95a5a6; padding: 10px 0; margin-top: 20px; border-top: 1px dashed #ddd; }
-        
-        .page { display:none; animation: fadeIn 0.3s; }
-        .page.active { display:block; }
-        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+        #ads-bar { background:var(--warn); color:white; padding:8px; font-size:14px; display:none; text-align:center; font-weight:bold; }
+        .page { display:none; } .page.active { display:block; }
+        .rights-text { font-size: 10px; color: #95a5a6; text-align: center; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div id="lock-screen">
-    <h2 style="color:var(--s)">🏪 نظام محمد طه للادارة</h2>
-    <p>يرجى إدخال كود التفعيل للبدء</p>
+    <h2 style="color:var(--s)">🏪 نظام إدارة الدكان</h2>
+    <p>أدخل كود التفعيل الممنوح لك</p>
     <input type="password" id="acc-code" class="login-input" placeholder="رمز التفعيل">
-    <button class="btn btn-p" style="max-width:300px" onclick="verify()">دخول آمن 🔓</button>
-    <div style="margin-top:30px; font-size:11px; color:#bdc3c7;">
-        حقوق البرمجية محفوظة لـ: <br> <b>محمد طه عطا المنان © 2026</b>
-    </div>
+    <button class="btn btn-p" style="max-width:300px" onclick="verify()">دخول للنظام 🔓</button>
+    <p style="font-size:11px; color:#bdc3c7; margin-top:30px;">برمجة: محمد طه عطا المنان © 2026</p>
 </div>
+
+<div id="ads-bar"><marquee id="ad-text"></marquee></div>
 
 <div id="app" class="container">
     <div id="pg-home" class="page active">
         <div class="card" style="background:var(--p); color:white; text-align:center;">
-            <h3 id="st-name" style="margin:0">تحميل...</h3>
+            <h3 id="st-name" style="margin:0">جاري التحميل...</h3>
             <h1 id="profit-val" style="margin:10px 0">0.00 ج</h1>
-            <small>أرباح اليوم المحققة</small>
+            <small>صافي أرباح اليوم</small>
         </div>
-
         <div class="card" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center;">
-            <div style="border-left:1px solid #eee"><small>قيمة المخزن (شراء)</small><h4 id="stock-in">0</h4></div>
-            <div><small>قيمة المخزن (بيع)</small><h4 id="stock-out">0</h4></div>
+            <div style="border-left:1px solid #eee"><small>المخزن (شراء)</small><h4 id="stock-in">0</h4></div>
+            <div><small>المخزن (بيع)</small><h4 id="stock-out">0</h4></div>
         </div>
-
-        <button class="btn btn-s" onclick="shareWA()">📱 تقرير واتساب (بواسطة النظام)</button>
-        <button class="btn btn-err" style="opacity:0.6; margin-top:20px;" onclick="logout()">🚪 خروج</button>
-        
-        <div class="rights-footer">
-            جميع الحقوق محفوظة لمحمد طه عطا المنان © 2026
-        </div>
+        <button class="btn btn-s" onclick="shareWA()">📱 إرسال تقرير اليوم واتساب</button>
+        <button class="btn btn-err" style="opacity:0.7" onclick="logout()">🚪 تسجيل الخروج</button>
+        <div class="rights-text">جميع الحقوق محفوظة لمحمد طه عطا المنان © 2026</div>
     </div>
 
     <div id="pg-sell" class="page">
         <div class="card">
             <h4>🧾 فاتورة بيع</h4>
-            <input type="text" id="p-search" placeholder="ابحث عن منتج..." onkeyup="filterProducts()">
+            <input type="text" id="p-search" placeholder="ابحث عن صنف..." onkeyup="filterProducts()">
             <select id="p-sel" onchange="updP()" size="5"></select>
-            <input type="number" id="p-qty" placeholder="الكمية">
+            <input type="number" id="p-qty" placeholder="الكمية المطلوبة">
             <input type="number" id="p-prc" placeholder="السعر" readonly style="background:#f9f9f9">
-            <button class="btn btn-p" onclick="sell()">تأكيد البيع ✅</button>
+            <button class="btn btn-p" onclick="sell()">تأكيد العملية ✅</button>
         </div>
     </div>
 
     <div id="pg-stock" class="page">
         <div class="card">
-            <h4>📦 إدارة البضاعة</h4>
+            <h4>📦 إضافة بضاعة</h4>
             <input type="text" id="in-n" placeholder="اسم المنتج">
             <div style="display:flex; gap:10px;">
                 <input type="number" id="in-b" placeholder="سعر الشراء">
                 <input type="number" id="in-s" placeholder="سعر البيع">
             </div>
             <input type="number" id="in-q" placeholder="الكمية">
-            <button class="btn btn-p" onclick="addS()">إضافة للمخزن ☁️</button>
+            <button class="btn btn-p" onclick="addS()">حفظ في السحابة ☁️</button>
         </div>
         <div id="inventory-list"></div>
     </div>
@@ -100,7 +91,6 @@
 </nav>
 
 <script>
-    // بيانات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
@@ -112,20 +102,20 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database();
+    const database = firebase.database();
 
     let db_p = []; let db_s = [];
     const sid = localStorage.getItem('sid');
 
     function verify() {
         const code = document.getElementById('acc-code').value;
-        dbRef.ref('activations/' + code).once('value').then(s => {
+        database.ref('activations/' + code).once('value').then(s => {
             if(s.exists()) {
                 localStorage.setItem('auth', 'true');
                 localStorage.setItem('sid', code);
                 localStorage.setItem('sname', s.val().name);
                 location.reload();
-            } else { alert("كود تفعيل غير صحيح!"); }
+            } else { alert("كود التفعيل غير موجود!"); }
         });
     }
 
@@ -138,37 +128,58 @@
     }
 
     function startSync() {
-        dbRef.ref('stores/' + sid + '/inventory').on('value', s => { db_p = s.val() || []; renderInventory(); filterProducts(); });
-        dbRef.ref('stores/' + sid + '/sales').on('value', s => { db_s = s.val() || []; calculateProfit(); });
+        database.ref('stores/' + sid + '/inventory').on('value', s => { 
+            db_p = s.val() || []; 
+            renderInventory(); 
+            filterProducts(); 
+        });
+        database.ref('stores/' + sid + '/sales').on('value', s => { 
+            db_s = s.val() || []; 
+            calculateProfit(); 
+        });
+        database.ref('global_ads').on('value', s => {
+            const ad = s.val();
+            if(ad && ad.active) {
+                document.getElementById('ads-bar').style.display = 'block';
+                document.getElementById('ad-text').innerText = ad.text;
+            } else {
+                document.getElementById('ads-bar').style.display = 'none';
+            }
+        });
     }
 
     function filterProducts() {
         const q = document.getElementById('p-search').value.toLowerCase();
         const sel = document.getElementById('p-sel');
         sel.innerHTML = '';
-        db_p.forEach((x, i) => { if(x.name.toLowerCase().includes(q)) sel.innerHTML += `<option value="${i}">${x.name} (${x.qty})</option>`; });
+        db_p.forEach((x, i) => { 
+            if(x.name.toLowerCase().includes(q)) 
+                sel.innerHTML += `<option value="${i}">${x.name} (المتاح: ${x.qty})</option>`; 
+        });
     }
 
     function sell() {
         const i = document.getElementById('p-sel').value;
         const q = +document.getElementById('p-qty').value;
-        if(i === "" || q <= 0) return alert("خطأ في المدخلات");
+        if(i === "" || q <= 0) return alert("حدد الصنف والكمية");
         let item = db_p[i];
-        if(item.qty < q) return alert("المخزن لا يكفي");
+        if(item.qty < q) return alert("المخزون غير كافٍ!");
 
         const profit = (item.sell - item.buy) * q;
         db_s.push({ name: item.name, q: q, p: profit, date: new Date().toLocaleDateString('en-GB') });
         item.qty -= q;
         
-        dbRef.ref('stores/' + sid).update({ inventory: db_p, sales: db_s });
+        database.ref('stores/' + sid).update({ inventory: db_p, sales: db_s });
         document.getElementById('p-qty').value = "";
+        alert("تم البيع بنجاح");
     }
 
     function addS() {
         const n=document.getElementById('in-n').value, b=+document.getElementById('in-b').value, s=+document.getElementById('in-s').value, q=+document.getElementById('in-q').value;
-        if(!n) return;
+        if(!n || isNaN(b)) return alert("أكمل البيانات");
+        
         db_p.push({ name: n, buy: b, sell: s, qty: q });
-        dbRef.ref('stores/' + sid + '/inventory').set(db_p);
+        database.ref('stores/' + sid + '/inventory').set(db_p);
         ["in-n","in-b","in-s","in-q"].forEach(id => document.getElementById(id).value = "");
     }
 
@@ -182,10 +193,13 @@
         let bV = 0, sV = 0, listH = '';
         db_p.forEach((x, i) => {
             bV += (x.buy * x.qty); sV += (x.sell * x.qty);
-            listH += `<div class="card" style="margin-bottom:5px; font-size:14px;">${x.name} | كمية: ${x.qty}</div>`;
+            listH += `<div class="card" style="margin-bottom:5px; display:flex; justify-content:space-between;">
+                <span>${x.name} <b>(${x.qty})</b></span>
+                <span style="color:var(--p)">${x.sell} ج</span>
+            </div>`;
         });
-        document.getElementById('stock-in').innerText = bV.toFixed(0);
-        document.getElementById('stock-out').innerText = sV.toFixed(0);
+        document.getElementById('stock-in').innerText = bV.toFixed(0) + " ج";
+        document.getElementById('stock-out').innerText = sV.toFixed(0) + " ج";
         document.getElementById('inventory-list').innerHTML = listH;
     }
 
@@ -196,10 +210,15 @@
         btn.classList.add('active');
     }
 
+    function updP() {
+        const i = document.getElementById('p-sel').value;
+        if(i !== "") document.getElementById('p-prc').value = db_p[i].sell;
+    }
+
     function logout() { localStorage.clear(); location.reload(); }
 
     function shareWA() {
-        const msg = `نظام إدارة الدكان الذكي\n------------------\nالمالك: محمد طه عطا المنان\nمحل: ${localStorage.getItem('sname')}\nأرباح اليوم: ${document.getElementById('profit-val').innerText}\nقيمة مبيعات المخزن: ${document.getElementById('stock-out').innerText}`;
+        const msg = `تقرير دكان: ${localStorage.getItem('sname')}\nأرباح اليوم: ${document.getElementById('profit-val').innerText}\nتم بواسطة نظام محمد طه الرقمي`;
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
     }
 </script>
