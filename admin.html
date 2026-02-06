@@ -7,39 +7,89 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family:'Cairo'; background:#ecf0f1; padding:20px; }
+        body { font-family:'Cairo'; background:#ecf0f1; padding:20px; text-align: right; }
         .card { background:#fff; padding:20px; border-radius:15px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-        input, button { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ddd; }
+        input, button { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ddd; box-sizing: border-box; }
         button { background:#3498db; color:#fff; border:none; cursor:pointer; font-weight:700; }
         table { width:100%; border-collapse:collapse; margin-top:10px; }
         th, td { padding:10px; border:1px solid #eee; text-align:center; }
+        h2 { color: #2c3e50; margin-top: 0; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>📢 إعلان عام</h2>
-        <input id="ad-txt" placeholder="نص الإعلان">
-        <button onclick="sendAd(true)">تفعيل</button>
-        <button style="background:gray" onclick="sendAd(false)">إخفاء</button>
+        <h2>📢 إعلان عام للمشتركين</h2>
+        <input id="ad-txt" placeholder="اكتب نص الإعلان هنا">
+        <button onclick="sendAd(true)">تفعيل الإعلان</button>
+        <button style="background:gray" onclick="sendAd(false)">إخفاء الإعلان</button>
     </div>
+
     <div class="card">
-        <h2>🔑 إضافة مشترك جديد</h2>
-        <input id="s-n" placeholder="اسم الدكان">
-        <input id="s-c" placeholder="كود التفعيل">
-        <button style="background:#2ecc71" onclick="addS()">اعتماد</button>
+        <h2>🔑 إضافة مشترك (دكان) جديد</h2>
+        <input id="s-n" placeholder="اسم صاحب الدكان">
+        <input id="s-c" placeholder="كود التفعيل (مثلاً: Taha01)">
+        <button style="background:#2ecc71" onclick="addS()">اعتماد المشترك</button>
     </div>
+
     <div class="card">
-        <h2>🏪 الدكاكين النشطة</h2>
-        <div id="list"></div>
+        <h2>🏪 قائمة الدكاكين المفعلة</h2>
+        <div id="list">جاري تحميل البيانات...</div>
     </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://...", projectId: "..." };
+    // بيانات مشروعك Store-project المستخرجة من الصورة
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
+        authDomain: "store-project-b023e.firebaseapp.com",
+        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
+        projectId: "store-project-b023e",
+        storageBucket: "store-project-b023e.firebasestorage.app",
+        messagingSenderId: "561530737705",
+        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+    };
+
+    // بدء تشغيل Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    function sendAd(s) { db.ref('global_ads').set({text:document.getElementById('ad-txt').value, active:s}); alert("تم"); }
-    function addS() { const n=document.getElementById('s-n').value, c=document.getElementById('s-c').value; db.ref('activations/'+c).set({name:n, active:true}); alert("تم الحفظ"); }
-    db.ref('activations').on('value', s=>{ let h='<table><tr><th>الدكان</th><th>الكود</th></tr>'; s.forEach(c=>{ h+=`<tr><td>${c.val().name}</td><td>${c.key}</td></tr>`; }); h+='</table>'; document.getElementById('list').innerHTML=h; });
+
+    // وظيفة إرسال الإعلان
+    function sendAd(status) {
+        const text = document.getElementById('ad-txt').value;
+        db.ref('global_ads').set({
+            text: text,
+            active: status
+        }).then(() => {
+            alert("تم تحديث الإعلان بنجاح!");
+        });
+    }
+
+    // وظيفة إضافة مشترك جديد
+    function addS() {
+        const name = document.getElementById('s-n').value;
+        const code = document.getElementById('s-c').value;
+        if(name && code) {
+            db.ref('activations/' + code).set({
+                name: name,
+                active: true
+            }).then(() => {
+                alert("تم تفعيل كود المشترك بنجاح");
+                document.getElementById('s-n').value = "";
+                document.getElementById('s-c').value = "";
+            });
+        } else {
+            alert("يرجى ملء البيانات أولاً");
+        }
+    }
+
+    // عرض المشتركين في جدول وتحديثه تلقائياً
+    db.ref('activations').on('value', snapshot => {
+        let html = '<table><tr><th>اسم الدكان</th><th>كود التفعيل</th></tr>';
+        snapshot.forEach(child => {
+            html += `<tr><td>${child.val().name}</td><td>${child.key}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('list').innerHTML = html;
+    });
 </script>
 </body>
 </html>
