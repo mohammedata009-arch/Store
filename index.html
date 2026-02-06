@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام الدكان الذكي</title>
+    <title>نظام الدكان الذكي - محمد طه</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -26,21 +26,26 @@
     </style>
 </head>
 <body>
+
 <div id="ads"><marquee id="ad-text"></marquee></div>
+
 <div id="lock-screen" style="display:none; position:fixed; inset:0; background:#fff; z-index:9999; padding:40px; text-align:center;">
     <h1 style="margin-top:20%;">🏪 نظام الدكان</h1>
+    <p>يرجى إدخال كود التفعيل للبدء</p>
     <input type="password" id="acc-code" placeholder="رمز التفعيل">
     <button class="btn btn-p" onclick="verify()">دخول آمن</button>
 </div>
+
 <div id="app" class="container">
     <div id="pg-home" class="page active">
         <div class="card" style="background:var(--p); color:#fff; text-align:center;">
             <h3 id="st-name">دكانك الرقمي</h3>
             <h1 id="profit-val">0 ج</h1>
+            <small>أرباح اليوم</small>
         </div>
         <div class="card" style="background:var(--s); color:#fff; display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center;">
-            <div><small>رأس مال</small><h3 id="stock-in">0</h3></div>
-            <div><small>قيمة البيع</small><h3 id="stock-out">0</h3></div>
+            <div><small>رأس مال المخزن</small><h3 id="stock-in">0</h3></div>
+            <div><small>قيمة البيع المتوقعة</small><h3 id="stock-out">0</h3></div>
         </div>
         <div class="card">
             <h4>📊 التقارير</h4>
@@ -48,56 +53,208 @@
                 <button class="btn btn-s" onclick="getRep('stock')">جرد المخزن</button>
                 <button class="btn btn-s" onclick="getRep('sales')">مبيعات اليوم</button>
             </div>
-            <button class="btn btn-w" onclick="shareWA()">إرسال واتساب 📱</button>
+            <button class="btn btn-w" onclick="shareWA()">إرسال التقرير واتساب 📱</button>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <button class="btn btn-err" onclick="reset()">تصفير اليومية</button>
             <button class="btn btn-s" style="background:gray;" onclick="logout()">خروج 🚪</button>
         </div>
     </div>
+
     <div id="pg-sell" class="page">
         <div class="card">
-            <h4>🧾 بيع جديد</h4>
+            <h4>🧾 عملية بيع</h4>
             <select id="p-sel" onchange="updP()"><option value="">-- اختر المنتج --</option></select>
-            <input type="number" id="p-qty" placeholder="الكمية">
-            <input type="number" id="p-prc" placeholder="السعر" readonly style="background:#f8f9fa;">
-            <button class="btn btn-p" onclick="sell()">تأكيد العملية</button>
+            <input type="number" id="p-qty" placeholder="الكمية المطلوبة">
+            <input type="number" id="p-prc" placeholder="السعر الحالي" readonly style="background:#f8f9fa;">
+            <button class="btn btn-p" onclick="sell()">تأكيد البيع</button>
         </div>
     </div>
+
     <div id="pg-stock" class="page">
         <div class="card">
-            <h4>📦 إضافة بضاعة</h4>
+            <h4>📦 إضافة بضاعة جديدة</h4>
             <input type="text" id="in-n" placeholder="اسم المنتج">
-            <input type="number" id="in-b" placeholder="شراء">
-            <input type="number" id="in-s" placeholder="بيع">
-            <input type="number" id="in-q" placeholder="الكمية">
-            <button class="btn btn-p" onclick="addS()">حفظ</button>
+            <input type="number" id="in-b" placeholder="سعر الشراء">
+            <input type="number" id="in-s" placeholder="سعر البيع للجمهور">
+            <input type="number" id="in-q" placeholder="الكمية المتوفرة">
+            <button class="btn btn-p" onclick="addS()">حفظ في المخزن</button>
         </div>
     </div>
 </div>
-<div id="modal" class="modal"><div class="modal-content"><div id="print-area"><h3 id="m-tt"></h3><hr><div id="m-bb"></div></div><button class="btn btn-p" onclick="window.print()">طباعة</button><button class="btn btn-s" style="background:gray" onclick="document.getElementById('modal').style.display='none'">إغلاق</button></div></div>
-<nav class="tabs"><button class="tab active" onclick="nav('pg-home', this)">🏠 الرئيسية</button><button class="tab" onclick="nav('pg-sell', this)">🧾 بيع</button><button class="tab" onclick="nav('pg-stock', this)">📦 مخزن</button></nav>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div id="print-area">
+            <h3 id="m-tt"></h3>
+            <hr>
+            <div id="m-bb"></div>
+        </div>
+        <button class="btn btn-p" onclick="window.print()">طباعة التقرير</button>
+        <button class="btn btn-s" style="background:gray" onclick="document.getElementById('modal').style.display='none'">إغلاق</button>
+    </div>
+</div>
+
+<nav class="tabs">
+    <button class="tab active" onclick="nav('pg-home', this)">🏠 الرئيسية</button>
+    <button class="tab" onclick="nav('pg-sell', this)">🧾 بيع</button>
+    <button class="tab" onclick="nav('pg-stock', this)">📦 مخزن</button>
+</nav>
 
 <script>
-    const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://...", projectId: "..." };
+    // بيانات الربط الحقيقية لمشروعك Store-project
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
+        authDomain: "store-project-b023e.firebaseapp.com",
+        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
+        projectId: "store-project-b023e",
+        storageBucket: "store-project-b023e.firebasestorage.app",
+        messagingSenderId: "561530737705",
+        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+    };
+
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    let db = { p: JSON.parse(localStorage.getItem('p')) || [], s: JSON.parse(localStorage.getItem('s')) || [] };
+
+    let db = { 
+        p: JSON.parse(localStorage.getItem('p')) || [], 
+        s: JSON.parse(localStorage.getItem('s')) || [] 
+    };
     const sid = localStorage.getItem('sid');
-    if(!localStorage.getItem('auth')) document.getElementById('lock-screen').style.display='block';
-    else { document.getElementById('st-name').innerText=localStorage.getItem('sname'); initSync(); }
-    function verify() { const c=document.getElementById('acc-code').value; database.ref('activations/'+c).once('value', s=>{ if(s.exists()){ localStorage.setItem('auth','1'); localStorage.setItem('sid',c); localStorage.setItem('sname',s.val().name); location.reload(); }else alert("خطأ!"); }); }
-    function logout() { if(confirm("خروج؟")){ localStorage.clear(); location.reload(); } }
-    function initSync() { database.ref('stores/'+sid+'/inventory').on('value', s=>{ if(s.exists()){ db.p=s.val(); localStorage.setItem('p',JSON.stringify(db.p)); render(); } }); database.ref('global_ads').on('value', s=>{ const a=s.val(); if(a&&a.active){ document.getElementById('ads').style.display='block'; document.getElementById('ad-text').innerText=a.text; }else document.getElementById('ads').style.display='none'; }); }
-    function addS() { const n=document.getElementById('in-n'), b=document.getElementById('in-b'), s=document.getElementById('in-s'), q=document.getElementById('in-q'); db.p.push({name:n.value, buy:+b.value, sell:+s.value, qty:+q.value}); sync(); [n,b,s,q].forEach(i=>i.value=""); }
-    function sell() { const i=document.getElementById('p-sel').value, q=document.getElementById('p-qty'); let item=db.p[i]; if(item.qty<+q.value) return alert("لا تكفي!"); const profit=(item.sell-item.buy)*+q.value; db.s.push({name:item.name, q:+q.value, t:item.sell*+q.value, p:profit, date:new Date().toLocaleDateString()}); item.qty-=+q.value; sync(); q.value=""; }
-    function sync() { localStorage.setItem('p', JSON.stringify(db.p)); localStorage.setItem('s', JSON.stringify(db.s)); database.ref('stores/'+sid+'/inventory').set(db.p); database.ref('stores/'+sid+'/daily_stats').set({sales:db.s}); render(); }
-    function render() { const sel=document.getElementById('p-sel'); sel.innerHTML='<option value="">-- المنتج --</option>'; let bV=0, sV=0; db.p.forEach((x,i)=>{ if(x.qty>0){ sel.innerHTML+=`<option value="${i}">${x.name} (${x.qty})</option>`; bV+=(x.buy*x.qty); sV+=(x.sell*x.qty); } }); document.getElementById('stock-in').innerText=bV+" ج"; document.getElementById('stock-out').innerText=sV+" ج"; const today=new Date().toLocaleDateString(); const p=db.s.filter(x=>x.date===today).reduce((a,b)=>a+b.p,0); document.getElementById('profit-val').innerText=p+" ج"; }
-    function nav(id, btn) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active'); }
-    function updP() { const i=document.getElementById('p-sel').value; if(i!=="") document.getElementById('p-prc').value=db.p[i].sell; }
-    function getRep(type) { let h='<table border="1" style="width:100%"><tr><th>الصنف</th><th>الكمية</th></tr>'; if(type==='stock') db.p.forEach(x=>{ if(x.qty>0) h+=`<tr><td>${x.name}</td><td>${x.qty}</td></tr>`; }); else db.s.forEach(x=>h+=`<tr><td>${x.name}</td><td>${x.q}</td></tr>`); h+='</table>'; document.getElementById('m-tt').innerText=(type==='stock'?"جرد":"مبيعات"); document.getElementById('m-bb').innerHTML=h; document.getElementById('modal').style.display='flex'; }
-    function shareWA() { const msg=`تقرير دكان: ${localStorage.getItem('sname')}\nأرباح اليوم: ${document.getElementById('profit-val').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`); }
-    function reset() { if(confirm("تصفير؟")) { db.s=[]; sync(); } }
+
+    // التحقق من الدخول
+    if(!localStorage.getItem('auth')) {
+        document.getElementById('lock-screen').style.display='block';
+    } else {
+        document.getElementById('st-name').innerText = localStorage.getItem('sname');
+        initSync();
+    }
+
+    function verify() {
+        const c = document.getElementById('acc-code').value;
+        database.ref('activations/'+c).once('value', s => {
+            if(s.exists()){
+                localStorage.setItem('auth','1');
+                localStorage.setItem('sid',c);
+                localStorage.setItem('sname',s.val().name);
+                location.reload();
+            } else {
+                alert("كود التفعيل غير صحيح!");
+            }
+        });
+    }
+
+    function logout() {
+        if(confirm("هل تريد تسجيل الخروج؟")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    function initSync() {
+        database.ref('stores/'+sid+'/inventory').on('value', s => {
+            if(s.exists()){
+                db.p = s.val();
+                localStorage.setItem('p', JSON.stringify(db.p));
+                render();
+            }
+        });
+        database.ref('global_ads').on('value', s => {
+            const a = s.val();
+            if(a && a.active){
+                document.getElementById('ads').style.display = 'block';
+                document.getElementById('ad-text').innerText = a.text;
+            } else {
+                document.getElementById('ads').style.display = 'none';
+            }
+        });
+    }
+
+    function addS() {
+        const n=document.getElementById('in-n'), b=document.getElementById('in-b'), s=document.getElementById('in-s'), q=document.getElementById('in-q');
+        if(!n.value || !b.value || !s.value || !q.value) return alert("امسح الخانات الفارغة!");
+        db.p.push({name:n.value, buy:+b.value, sell:+s.value, qty:+q.value});
+        sync();
+        [n,b,s,q].forEach(i=>i.value="");
+        alert("تمت الإضافة بنجاح");
+    }
+
+    function sell() {
+        const i=document.getElementById('p-sel').value, q=document.getElementById('p-qty');
+        if(i==="" || !q.value) return alert("اختر الصنف والكمية!");
+        let item = db.p[i];
+        if(item.qty < +q.value) return alert("الكمية المتوفرة لا تكفي!");
+        
+        const profit = (item.sell - item.buy) * +q.value;
+        db.s.push({name:item.name, q:+q.value, t:item.sell*+q.value, p:profit, date:new Date().toLocaleDateString()});
+        item.qty -= +q.value;
+        sync();
+        q.value = "";
+        alert("تمت عملية البيع");
+    }
+
+    function sync() {
+        localStorage.setItem('p', JSON.stringify(db.p));
+        localStorage.setItem('s', JSON.stringify(db.s));
+        database.ref('stores/'+sid+'/inventory').set(db.p);
+        database.ref('stores/'+sid+'/daily_stats').set({sales:db.s});
+        render();
+    }
+
+    function render() {
+        const sel = document.getElementById('p-sel');
+        sel.innerHTML = '<option value="">-- اختر المنتج --</option>';
+        let bV=0, sV=0;
+        db.p.forEach((x,i) => {
+            if(x.qty > 0){
+                sel.innerHTML += `<option value="${i}">${x.name} (متوفر: ${x.qty})</option>`;
+                bV += (x.buy * x.qty);
+                sV += (x.sell * x.qty);
+            }
+        });
+        document.getElementById('stock-in').innerText = bV + " ج";
+        document.getElementById('stock-out').innerText = sV + " ج";
+        const today = new Date().toLocaleDateString();
+        const p = db.s.filter(x => x.date === today).reduce((a,b) => a + b.p, 0);
+        document.getElementById('profit-val').innerText = p + " ج";
+    }
+
+    function nav(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function updP() {
+        const i = document.getElementById('p-sel').value;
+        if(i !== "") document.getElementById('p-prc').value = db.p[i].sell;
+    }
+
+    function getRep(type) {
+        let h = '<table border="1" style="width:100%; border-collapse:collapse;"><tr><th>الصنف</th><th>الكمية</th></tr>';
+        if(type === 'stock') {
+            db.p.forEach(x => { if(x.qty > 0) h += `<tr><td>${x.name}</td><td>${x.qty}</td></tr>`; });
+        } else {
+            db.s.forEach(x => h += `<tr><td>${x.name}</td><td>${x.q}</td></tr>`);
+        }
+        h += '</table>';
+        document.getElementById('m-tt').innerText = (type === 'stock' ? "جرد المخزن" : "مبيعات اليوم");
+        document.getElementById('m-bb').innerHTML = h;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function shareWA() {
+        const msg = `تقرير دكان: ${localStorage.getItem('sname')}\nأرباح اليوم: ${document.getElementById('profit-val').innerText}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+    }
+
+    function reset() {
+        if(confirm("هل أنت متأكد من تصفير مبيعات اليوم؟")) {
+            db.s = [];
+            sync();
+        }
+    }
     render();
 </script>
 </body>
