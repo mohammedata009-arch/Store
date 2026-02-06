@@ -2,67 +2,49 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>M-TAHA Master Admin</title>
+    <title>إدارة محمد طه - M-TAHA</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .card { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; color: black; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        button { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; color: white; }
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 30px; direction: rtl; }
+        .card { background: white; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        button { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .pending { color: #f39c12; font-weight: bold; }
+        .active { color: #27ae60; font-weight: bold; }
     </style>
 </head>
 <body>
+    <h1>👑 طلبات تفعيل المتاجر (M-TAHA)</h1>
+    <hr>
+    <div id="list"></div>
 
-    <h1>👑 لوحة تحكم المدير (محمد طه)</h1>
+    <script>
+        const firebaseConfig = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    <div class="card">
-        <h3>📢 إعلان عام للتطبيقات</h3>
-        <input type="text" id="news" style="width:70%; padding:10px;">
-        <button style="background:green" onclick="setNews()">تحديث</button>
-    </div>
+        db.ref('requests').on('value', s => {
+            const data = s.val();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            for(let id in data) {
+                list.innerHTML += `
+                    <div class="card">
+                        <div>
+                            <b>المعرف: ${id}</b> <br>
+                            الاسم: ${data[id].name} <br>
+                            الحالة: <span class="${data[id].status}">${data[id].status === 'active' ? 'مفعّل ✅' : 'ينتظر التفعيل ⌛'}</span>
+                        </div>
+                        ${data[id].status !== 'active' ? `<button onclick="activate('${id}')">تفعيل المتجر الآن</button>` : '<span>-</span>'}
+                    </div>`;
+            }
+        });
 
-    <div class="card">
-        <h3>⌛ طلبات تفعيل جديدة</h3>
-        <div id="req-list"></div>
-    </div>
-
-    <div class="card">
-        <h3>📊 مراقبة المتاجر والديون</h3>
-        <div id="mon-list"></div>
-    </div>
-
-<script>
-    const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(cfg); const db = firebase.database();
-
-    function setNews() { db.ref('admin_news').set(document.getElementById('news').value); }
-
-    db.ref('requests').on('value', s => {
-        let h = '<table><tr><th>الاسم</th><th>الهاتف</th><th>الحالة</th><th>إجراء</th></tr>';
-        const d = s.val();
-        for(let id in d) {
-            h += `<tr><td>${d[id].name}</td><td>${d[id].phone}</td><td>${d[id].status}</td>
-            <td><button style="background:green" onclick="act('${id}')">تفعيل</button></td></tr>`;
+        function activate(id) {
+            if(confirm("هل تريد تفعيل هذا المتجر؟")) {
+                db.ref('requests/'+id).update({ status: 'active' });
+            }
         }
-        document.getElementById('req-list').innerHTML = h + '</table>';
-    });
-
-    function act(id) { db.ref('requests/'+id).update({status:'active'}); }
-
-    db.ref('stores').on('value', s => {
-        let h = '<table><tr><th>المتجر ID</th><th>بضائع</th><th>ديون</th><th>أرباح</th></tr>';
-        const d = s.val();
-        for(let id in d) {
-            const st = d[id];
-            const inv = st.inventory ? st.inventory.length : 0;
-            const deb = st.debtors ? st.debtors.reduce((a,b)=>a+b.balance,0) : 0;
-            const pro = st.sales ? st.sales.reduce((a,b)=>a+b.profit,0) : 0;
-            h += `<tr><td>${id}</td><td>${inv}</td><td>${deb}</td><td>${pro}</td></tr>`;
-        }
-        document.getElementById('mon-list').innerHTML = h + '</table>';
-    });
-</script>
+    </script>
 </body>
 </html>
