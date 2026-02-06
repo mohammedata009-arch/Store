@@ -2,158 +2,132 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>M-TAHA Pro v100</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M-TAHA GPS Elite</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --p: #6c5ce7; --s: #00cec9; --bg: #e0e5ec; --txt: #2d3436; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; user-select: none; }
-        header { background: var(--p); color: white; padding: 45px 20px 25px; border-radius: 0 0 30px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        :root { --gold: #c5a059; --dark: #0a0f1a; --card: #161e2d; --text: #ffffff; }
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--dark); color: var(--text); margin: 0; overflow-x: hidden; }
+
+        /* شاشة الترحيب والتسجيل */
+        #auth-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid var(--gold); width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        
+        .v-input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #2d3748; background: #0a0f1a; color: white; text-align: center; font-size: 16px; }
+        .v-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; background: var(--gold); color: #000; font-weight: 900; cursor: pointer; transition: 0.3s; }
+        .v-btn:disabled { background: #444; color: #888; }
+
+        header { padding: 40px 20px; text-align: center; background: linear-gradient(to bottom, var(--card), var(--dark)); border-bottom: 1px solid rgba(197, 160, 89, 0.3); }
         .container { padding: 15px; max-width: 500px; margin: auto; display: none; }
-        .v-card { background: var(--bg); border-radius: 25px; padding: 20px; box-shadow: 9px 9px 16px #bebebe, -9px -9px 16px #ffffff; margin-top: -40px; text-align: center; }
-        .radar { width: 140px; height: 140px; border-radius: 50%; background: var(--bg); box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff; margin: 0 auto 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 3px solid var(--s); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .box { padding: 12px; border-radius: 15px; color: white; font-size: 14px; font-weight: bold; }
-        .v-input { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 12px; background: var(--bg); box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff; text-align: center; font-family: 'Cairo'; }
-        .v-btn { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--p); color: white; font-weight: 900; cursor: pointer; margin-top: 10px; }
-        nav { position: fixed; bottom: 15px; left: 15px; right: 15px; background: #2d3436; height: 65px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 2000; }
-        .n-link { color: #636e72; background: none; border: none; font-family: 'Cairo'; font-size: 12px; font-weight: bold; }
-        .n-link.active { color: white; transform: translateY(-3px); transition: 0.3s; }
-        #lock { position: fixed; inset: 0; background: var(--p); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .page { display: none; animation: fade 0.3s ease; } .page.active { display: block; }
-        @keyframes fade { from {opacity:0} to {opacity:1} }
+        .v-card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        
+        nav { position: fixed; bottom: 20px; left: 10px; right: 10px; background: rgba(22, 30, 45, 0.9); backdrop-filter: blur(10px); height: 75px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(197,160,89,0.3); }
+        .nav-item { color: #94a3b8; background: none; border: none; font-size: 11px; font-weight: bold; }
+        .nav-item.active { color: var(--gold); }
+        .page { display: none; } .page.active { display: block; }
     </style>
 </head>
 <body>
 
-<div id="lock">
-    <div style="font-size: 50px;">💎</div>
-    <h2 style="margin: 10px 0 20px;">M-TAHA v100</h2>
-    <input type="password" id="pass" class="v-input" style="max-width:260px; background:white;" placeholder="كود تفعيل المحل">
-    <button class="v-btn" style="max-width:260px; background:white; color:var(--p)" onclick="verify()">دخول النظام</button>
+<div id="auth-screen">
+    <div class="auth-card">
+        <h2 style="color:var(--gold); margin-bottom:5px;">M-TAHA v2566</h2>
+        <p style="font-size:12px; color:#94a3b8; margin-bottom:20px;">تسجيل دخول - تحديد الموقع مطلوب</p>
+        
+        <input type="text" id="reg-name" class="v-input" placeholder="الاسم بالكامل">
+        <input type="number" id="reg-phone" class="v-input" placeholder="رقم الهاتف">
+        <input type="password" id="reg-code" class="v-input" placeholder="كود تفعيل المنظومة">
+        
+        <p id="gps-msg" style="font-size:11px; color:#ef4444;">📍 يرجى تفعيل الموقع للمتابعة</p>
+        <button id="auth-btn" class="v-btn" onclick="registerUser()" disabled>دخول النظام</button>
+    </div>
 </div>
 
-<header id="h" style="display:none">
-    <div><small>المتجر:</small><h3 id="sn" style="margin:0">..</h3></div>
-    <button onclick="logout()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:8px; padding:5px 12px; font-family:'Cairo'; font-size:12px;">خروج</button>
+<header id="main-h" style="display:none">
+    <h1 id="user-display" class="gold-title" style="color:var(--gold); margin:0;">..</h1>
+    <small id="loc-status" style="color:#22c55e">📍 الموقع متصل</small>
 </header>
 
-<div class="container" id="main">
-    <div id="p1" class="page active">
-        <div class="v-card">
-            <div class="radar"><small>صافي الربح</small><h2 id="net-p" style="margin:0">0</h2></div>
-            <div class="grid">
-                <div class="box" style="background:#00b894">مبيعات اليوم<br><span id="val-s">0</span></div>
-                <div class="box" style="background:#0984e3">قيمة المخزن<br><span id="val-i">0</span></div>
-                <div class="box" style="background:#f1c40f">ديون اليوم<br><span id="val-d">0</span></div>
-                <div class="box" style="background:#e84393" onclick="window.print()">🖨️ طباعة</div>
+<div class="container" id="app-content">
+    <div id="pg1" class="page active">
+        <div class="v-card" style="text-align:center">
+            <small>صافي الربح اليومي</small>
+            <h1 id="net-p" style="color:var(--gold); font-size:48px; margin:10px 0;">0</h1>
+            <div style="display:flex; justify-content:space-around; border-top:1px solid #334155; pt:15px;">
+                <span>كاش: <b id="v-s" style="color:#22c55e">0</b></span>
+                <span>ديون: <b id="v-d" style="color:#ef4444">0</b></span>
             </div>
         </div>
-    </div>
-
-    <div id="p2" class="page">
-        <div class="v-card" style="margin-top:10px">
-            <h4 style="margin:0 0 10px">🧾 فاتورة سريعة</h4>
-            <input type="text" id="srch" class="v-input" placeholder="ابحث عن صنف..." onkeyup="f()">
-            <select id="plist" class="v-input"></select>
-            <input type="number" id="qty" class="v-input" placeholder="الكمية">
-            <div class="grid">
-                <button class="v-btn" style="background:#00b894; margin:0" onclick="sell(false)">كاش ✅</button>
-                <button class="v-btn" style="background:#f1c40f; margin:0" onclick="sell(true)">دين 🤝</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="p3" class="page">
-        <div class="v-card" style="margin-top:10px">
-            <h4>📦 تحديث المخزون</h4>
-            <input type="text" id="in-n" class="v-input" placeholder="اسم المنتج">
-            <input type="number" id="in-b" class="v-input" placeholder="سعر الشراء">
-            <input type="number" id="in-s" class="v-input" placeholder="سعر البيع">
-            <input type="number" id="in-q" class="v-input" placeholder="الكمية المضافة">
-            <button class="v-btn" onclick="add()">حفظ في المخزن</button>
-        </div>
-        <div id="stk-l" style="margin-top: 20px;"></div>
     </div>
 </div>
 
-<nav id="n" style="display:none">
-    <button class="n-link active" onclick="tab('p1',this)">📊 الرئيسية</button>
-    <button class="n-link" onclick="tab('p2',this)">🧾 البيع</button>
-    <button class="n-link" onclick="tab('p3',this)">📦 المخزن</button>
+<nav id="main-n" style="display:none">
+    <button class="nav-item active" onclick="tab('pg1',this)">📊 الرئيسية</button>
+    <button class="nav-item" onclick="location.reload()">🔄 تحديث</button>
+    <button class="nav-item" onclick="logout()">🚪 خروج</button>
 </nav>
 
 <script>
     const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
     firebase.initializeApp(cfg); const db = firebase.database();
-    let inv=[], sls=[], sid=localStorage.getItem('sid');
+    let coords = null, sid = localStorage.getItem('sid');
 
-    function verify(){
-        const k=document.getElementById('pass').value;
-        db.ref('activations/'+k).once('value', s=>{
-            if(s.exists()){ localStorage.setItem('auth','1'); localStorage.setItem('sid',k); localStorage.setItem('sn',s.val().name); location.reload(); }
-            else alert("الكود غير صحيح!");
+    // تفعيل الـ GPS فوراً
+    navigator.geolocation.getCurrentPosition(p => {
+        coords = { lat: p.coords.latitude, lng: p.coords.longitude };
+        document.getElementById('gps-msg').innerText = "✅ تم تحديد الموقع";
+        document.getElementById('gps-msg').style.color = "#22c55e";
+        document.getElementById('auth-btn').disabled = false;
+    }, err => {
+        document.getElementById('gps-msg').innerText = "❌ خطأ: يجب السماح بالوصول للموقع";
+    });
+
+    function registerUser() {
+        const name = document.getElementById('reg-name').value;
+        const phone = document.getElementById('reg-phone').value;
+        const code = document.getElementById('reg-code').value;
+
+        if(!name || !phone || !code) return alert("يرجى إكمال البيانات");
+
+        db.ref('activations/'+code).once('value', s => {
+            if(s.exists()){
+                localStorage.setItem('auth', '1');
+                localStorage.setItem('sid', code);
+                localStorage.setItem('u_name', name);
+                
+                // إرسال تقرير الدخول للمدير
+                db.ref('monitoring/'+code).push({
+                    user: name, phone: phone, 
+                    location: coords, time: new Date().toLocaleString('ar-EG')
+                });
+                location.reload();
+            } else alert("كود التفعيل غير صحيح");
         });
     }
 
     if(localStorage.getItem('auth')){
-        document.getElementById('lock').style.display='none'; document.getElementById('h').style.display='flex'; document.getElementById('main').style.display='block'; document.getElementById('n').style.display='flex';
-        document.getElementById('sn').innerText=localStorage.getItem('sn');
-        db.ref('stores/'+sid).on('value', s=>{ 
-            const d=s.val()||{}; inv=d.inventory||[]; sls=d.sales||[]; u(); render(); 
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('main-h').style.display='block';
+        document.getElementById('app-content').style.display='block';
+        document.getElementById('main-n').style.display='flex';
+        document.getElementById('user-display').innerText = localStorage.getItem('u_name');
+        
+        db.ref('stores/'+sid).on('value', s => {
+            const d = s.val()||{}; const sls = d.sales||[];
+            const cash = sls.filter(x=>!x.isD).reduce((a,b)=>a+b.total,0);
+            const prof = sls.filter(x=>!x.isD).reduce((a,b)=>a+b.p,0);
+            const debt = sls.filter(x=>x.isD).reduce((a,b)=>a+b.total,0);
+            document.getElementById('net-p').innerText = prof.toFixed(0);
+            document.getElementById('v-s').innerText = cash;
+            document.getElementById('v-d').innerText = debt;
         });
     }
 
-    function u(){
-        const day = new Date().toLocaleDateString('en-GB');
-        const sT = sls.filter(x => x.date === day);
-        const cash = sT.filter(x=>!x.isD).reduce((a,b)=>a+b.total,0);
-        const prof = sT.filter(x=>!x.isD).reduce((a,b)=>a+b.p,0);
-        const debt = sT.filter(x=>x.isD).reduce((a,b)=>a+b.total,0);
-        const stkv = inv.reduce((a,b)=>a+(b.buy*b.qty),0);
-        document.getElementById('net-p').innerText=prof.toFixed(1); 
-        document.getElementById('val-s').innerText=cash; 
-        document.getElementById('val-d').innerText=debt;
-        document.getElementById('val-i').innerText=stkv.toFixed(0); f();
-    }
-
-    function sell(isD){
-        const i=document.getElementById('plist').value, q=parseInt(document.getElementById('qty').value);
-        if(i===""||isNaN(q)||q<=0) return alert("خطأ في البيانات");
-        let itm=inv[i]; if(itm.qty < q) return alert("الكمية غير كافية!");
-        itm.qty-=q;
-        sls.push({name:itm.name, total:itm.sell*q, p:(itm.sell-itm.buy)*q, isD:isD, date:new Date().toLocaleDateString('en-GB')});
-        db.ref('stores/'+sid).update({inventory:inv, sales:sls}).then(()=> { document.getElementById('qty').value=''; alert("تمت العملية"); });
-    }
-
-    function add(){
-        const n=document.getElementById('in-n').value, b=parseFloat(document.getElementById('in-b').value), s=parseFloat(document.getElementById('in-s').value), q=parseInt(document.getElementById('in-q').value);
-        if(!n || isNaN(b)) return alert("أكمل البيانات");
-        const idx = inv.findIndex(x=>x.name===n);
-        if(idx!==-1){ inv[idx].qty+=q; inv[idx].buy=b; inv[idx].sell=s; } else { inv.push({name:n, buy:b, sell:s, qty:q}); }
-        db.ref('stores/'+sid+'/inventory').set(inv).then(()=> { document.querySelectorAll('#p3 input').forEach(i=>i.value=''); alert("تم الحفظ"); });
-    }
-
-    function f(){
-        const q=document.getElementById('srch').value.toLowerCase(), s=document.getElementById('plist'); s.innerHTML='';
-        inv.forEach((x,i)=> { if(x.name.toLowerCase().includes(q)) s.innerHTML+=`<option value="${i}">${x.name} (${x.qty})</option>`; });
-    }
-
-    function render(){
-        let h=''; inv.forEach((x,i)=>{ h+=`<div class="v-card" style="margin-top:10px; padding:10px; display:flex; justify-content:space-between; align-items:center; font-size:14px;"><b>${x.name}</b><span>${x.qty} ق</span><button onclick="del(${i})" style="color:red; background:none; border:none; font-size:18px;">🗑️</button></div>`; });
-        document.getElementById('stk-l').innerHTML=h;
-    }
-
-    function tab(id,b){ 
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
-        document.querySelectorAll('.n-link').forEach(l=>l.classList.remove('active'));
-        document.getElementById(id).classList.add('active'); b.classList.add('active');
-    }
-    function logout(){ if(confirm("خروج من النظام؟")) { localStorage.clear(); location.reload(); } }
-    function del(i){ if(confirm("حذف الصنف نهائياً؟")) { inv.splice(i,1); db.ref('stores/'+sid+'/inventory').set(inv); } }
+    function logout() { localStorage.clear(); location.reload(); }
+    function tab(id,b){ /* وظيفة التنقل */ }
 </script>
 </body>
 </html>
