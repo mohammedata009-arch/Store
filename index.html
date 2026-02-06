@@ -2,132 +2,193 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-TAHA GPS Elite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بقالة السودان الذكية | M-TAHA</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --dark: #0a0f1a; --card: #161e2d; --text: #ffffff; }
+        :root { --p: #1e3799; --s: #4a69bd; --gold: #f6b93b; --red: #eb2f06; --green: #38ada9; --bg: #f1f2f6; }
         * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background: var(--dark); color: var(--text); margin: 0; overflow-x: hidden; }
-
-        /* شاشة الترحيب والتسجيل */
-        #auth-screen { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid var(--gold); width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        
-        .v-input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #2d3748; background: #0a0f1a; color: white; text-align: center; font-size: 16px; }
-        .v-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; background: var(--gold); color: #000; font-weight: 900; cursor: pointer; transition: 0.3s; }
-        .v-btn:disabled { background: #444; color: #888; }
-
-        header { padding: 40px 20px; text-align: center; background: linear-gradient(to bottom, var(--card), var(--dark)); border-bottom: 1px solid rgba(197, 160, 89, 0.3); }
-        .container { padding: 15px; max-width: 500px; margin: auto; display: none; }
-        .v-card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        
-        nav { position: fixed; bottom: 20px; left: 10px; right: 10px; background: rgba(22, 30, 45, 0.9); backdrop-filter: blur(10px); height: 75px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center; border: 1px solid rgba(197,160,89,0.3); }
-        .nav-item { color: #94a3b8; background: none; border: none; font-size: 11px; font-weight: bold; }
-        .nav-item.active { color: var(--gold); }
+        body { background: var(--bg); margin: 0; padding-bottom: 70px; }
+        header { background: var(--p); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; }
+        .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px; margin-top: -25px; }
+        .stat-card { background: white; padding: 10px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat-card b { display: block; font-size: 13px; color: #7f8c8d; }
+        .stat-card span { color: var(--p); font-weight: 900; font-size: 18px; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .v-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .v-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 16px; }
+        .v-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 16px; }
+        .btn-green { background: var(--green); } .btn-red { background: var(--red); }
+        .low-stock { border: 2px solid var(--red) !important; color: var(--red); background: #fff5f5; }
+        .badge-red { background: var(--red); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #ddd; }
+        .nav-link { background: none; border: none; color: #7f8c8d; font-weight: bold; font-size: 14px; }
+        .nav-link.active { color: var(--p); border-bottom: 2px solid var(--p); }
         .page { display: none; } .page.active { display: block; }
+        #toast { position: fixed; top: 20px; width: 80%; left: 10%; background: #333; color: white; padding: 12px; border-radius: 10px; text-align: center; display: none; z-index: 1000; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="auth-screen">
-    <div class="auth-card">
-        <h2 style="color:var(--gold); margin-bottom:5px;">M-TAHA v2566</h2>
-        <p style="font-size:12px; color:#94a3b8; margin-bottom:20px;">تسجيل دخول - تحديد الموقع مطلوب</p>
-        
-        <input type="text" id="reg-name" class="v-input" placeholder="الاسم بالكامل">
-        <input type="number" id="reg-phone" class="v-input" placeholder="رقم الهاتف">
-        <input type="password" id="reg-code" class="v-input" placeholder="كود تفعيل المنظومة">
-        
-        <p id="gps-msg" style="font-size:11px; color:#ef4444;">📍 يرجى تفعيل الموقع للمتابعة</p>
-        <button id="auth-btn" class="v-btn" onclick="registerUser()" disabled>دخول النظام</button>
-    </div>
-</div>
+<div id="toast"></div>
 
-<header id="main-h" style="display:none">
-    <h1 id="user-display" class="gold-title" style="color:var(--gold); margin:0;">..</h1>
-    <small id="loc-status" style="color:#22c55e">📍 الموقع متصل</small>
+<header>
+    <h3 id="store-title" style="margin:0">بقالة السودان الذكية</h3>
+    <small id="season-alert" style="color:var(--gold); font-weight:bold"></small>
 </header>
 
-<div class="container" id="app-content">
-    <div id="pg1" class="page active">
-        <div class="v-card" style="text-align:center">
-            <small>صافي الربح اليومي</small>
-            <h1 id="net-p" style="color:var(--gold); font-size:48px; margin:10px 0;">0</h1>
-            <div style="display:flex; justify-content:space-around; border-top:1px solid #334155; pt:15px;">
-                <span>كاش: <b id="v-s" style="color:#22c55e">0</b></span>
-                <span>ديون: <b id="v-d" style="color:#ef4444">0</b></span>
-            </div>
+<div class="stats-bar">
+    <div class="stat-card"><b>أرباح اليوم</b><span id="s-profit">0</span></div>
+    <div class="stat-card"><b>مبيعات كاش</b><span id="s-cash">0</span></div>
+    <div class="stat-card"><b>ديون معلقة</b><span id="s-debt" style="color:var(--red)">0</span></div>
+</div>
+
+<div class="container">
+    <div id="pg-sale" class="page active">
+        <div class="v-card">
+            <h4 style="margin:0 0 10px 0">🧾 فاتورة بيع جديدة</h4>
+            <label style="font-size: 12px;">اختر الصنف:</label>
+            <select id="p-select" class="v-input"></select>
+            <input type="number" id="p-qty" class="v-input" placeholder="الكمية المطلوبة">
+            <input type="text" id="p-cust" class="v-input" placeholder="اسم الزبون (للدين)">
+            <button class="v-btn btn-green" onclick="makeSale(false)">بيع كاش (واقبض) ✅</button>
+            <button class="v-btn btn-red" style="margin-top:10px" onclick="makeSale(true)">تسجيل دين 🤝</button>
+        </div>
+        
+        <div class="v-card">
+            <h4>📦 حالة الرفوف والمخزن</h4>
+            <div id="stock-view"></div>
+        </div>
+    </div>
+
+    <div id="pg-debt" class="page">
+        <div class="v-card">
+            <h4>📓 دفتر مديونيات الزبائن</h4>
+            <div id="debt-view"></div>
         </div>
     </div>
 </div>
 
-<nav id="main-n" style="display:none">
-    <button class="nav-item active" onclick="tab('pg1',this)">📊 الرئيسية</button>
-    <button class="nav-item" onclick="location.reload()">🔄 تحديث</button>
-    <button class="nav-item" onclick="logout()">🚪 خروج</button>
+<nav>
+    <button class="nav-link active" onclick="tab('pg-sale',this)">🏠 الرئيسية</button>
+    <button class="nav-link" onclick="tab('pg-debt',this)">📓 الديون</button>
 </nav>
 
 <script>
+    // إعدادات الداتا بيز
     const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
     firebase.initializeApp(cfg); const db = firebase.database();
-    let coords = null, sid = localStorage.getItem('sid');
+    const sid = "STORE_01"; 
+    let inv = [], sls = [];
 
-    // تفعيل الـ GPS فوراً
-    navigator.geolocation.getCurrentPosition(p => {
-        coords = { lat: p.coords.latitude, lng: p.coords.longitude };
-        document.getElementById('gps-msg').innerText = "✅ تم تحديد الموقع";
-        document.getElementById('gps-msg').style.color = "#22c55e";
-        document.getElementById('auth-btn').disabled = false;
-    }, err => {
-        document.getElementById('gps-msg').innerText = "❌ خطأ: يجب السماح بالوصول للموقع";
+    // التحديث اللحظي
+    db.ref('stores/'+sid).on('value', s => {
+        const d = s.val() || {};
+        if(d.status === 'off') {
+            document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h1 style='color:red'>⚠️ المتجر متوقف</h1><p>الرجاء مراجعة الإدارة (محمد طه)</p></div>";
+            return;
+        }
+        inv = d.inventory || []; sls = d.sales || [];
+        document.getElementById('store-title').innerText = d.name || "بقالتنا الذكية";
+        checkSeason(); render();
     });
 
-    function registerUser() {
-        const name = document.getElementById('reg-name').value;
-        const phone = document.getElementById('reg-phone').value;
-        const code = document.getElementById('reg-code').value;
-
-        if(!name || !phone || !code) return alert("يرجى إكمال البيانات");
-
-        db.ref('activations/'+code).once('value', s => {
-            if(s.exists()){
-                localStorage.setItem('auth', '1');
-                localStorage.setItem('sid', code);
-                localStorage.setItem('u_name', name);
-                
-                // إرسال تقرير الدخول للمدير
-                db.ref('monitoring/'+code).push({
-                    user: name, phone: phone, 
-                    location: coords, time: new Date().toLocaleString('ar-EG')
-                });
-                location.reload();
-            } else alert("كود التفعيل غير صحيح");
-        });
-    }
-
-    if(localStorage.getItem('auth')){
-        document.getElementById('auth-screen').style.display='none';
-        document.getElementById('main-h').style.display='block';
-        document.getElementById('app-content').style.display='block';
-        document.getElementById('main-n').style.display='flex';
-        document.getElementById('user-display').innerText = localStorage.getItem('u_name');
+    function render() {
+        let profit = 0, cash = 0, debt = 0;
+        const sel = document.getElementById('p-select'); sel.innerHTML = '<option value="">-- اختر صنف --</option>';
+        const view = document.getElementById('stock-view'); view.innerHTML = '';
         
-        db.ref('stores/'+sid).on('value', s => {
-            const d = s.val()||{}; const sls = d.sales||[];
-            const cash = sls.filter(x=>!x.isD).reduce((a,b)=>a+b.total,0);
-            const prof = sls.filter(x=>!x.isD).reduce((a,b)=>a+b.p,0);
-            const debt = sls.filter(x=>x.isD).reduce((a,b)=>a+b.total,0);
-            document.getElementById('net-p').innerText = prof.toFixed(0);
-            document.getElementById('v-s').innerText = cash;
-            document.getElementById('v-d').innerText = debt;
+        // عرض المخزون
+        inv.forEach((x, i) => {
+            sel.innerHTML += `<option value="${i}">${x.name} (متوفر: ${x.qty})</option>`;
+            const isLow = x.qty < 5;
+            view.innerHTML += `<div class="v-card ${isLow?'low-stock':''}" style="margin-bottom:8px; padding:10px; display:flex; justify-content:space-between; align-items:center">
+                <span>${x.name} ${isLow?'<span class="badge-red">نفد</span>':''}</span>
+                <b>${x.qty} قطعة</b>
+            </div>`;
         });
+
+        // عرض الديون وحساب الأرباح
+        const dView = document.getElementById('debt-view'); dView.innerHTML = '';
+        sls.forEach((x, i) => {
+            if(!x.isD) { 
+                cash += x.total; 
+                profit += x.profit; 
+            } else { 
+                debt += x.total;
+                dView.innerHTML += `<div class="v-card" style="border-right: 5px solid var(--red)">
+                    <div style="display:flex; justify-content:space-between">
+                        <b>${x.cust}</b>
+                        <span style="color:var(--red); font-weight:bold">${x.total} ج.س</span>
+                    </div>
+                    <small>${x.pname} - ${x.date}</small>
+                    <button onclick="payDebt(${i})" style="width:100%; margin-top:10px; background:var(--green); border:none; color:white; padding:8px; border-radius:5px; font-weight:bold; cursor:pointer">تم استلام المبلغ ✅</button>
+                </div>`;
+            }
+        });
+        document.getElementById('s-profit').innerText = profit.toFixed(1);
+        document.getElementById('s-cash').innerText = cash.toFixed(1);
+        document.getElementById('s-debt').innerText = debt.toFixed(1);
     }
 
-    function logout() { localStorage.clear(); location.reload(); }
-    function tab(id,b){ /* وظيفة التنقل */ }
+    function makeSale(isD) {
+        const idx = document.getElementById('p-select').value;
+        const q = parseInt(document.getElementById('p-qty').value);
+        if(idx === "" || isNaN(q)) return toast("الرجاء اختيار صنف وكمية");
+
+        let itm = inv[idx];
+        if(itm.qty < q) return toast("⚠️ لا يوجد كمية كافية في الرف!");
+        
+        const prf = (itm.sell - itm.buy) * q;
+        if(prf < 0 && !confirm("تنبيه: ستبيع بخسارة! هل أنت متأكد؟")) return;
+
+        itm.qty -= q;
+        sls.push({
+            pname: itm.name, 
+            total: itm.sell * q, 
+            profit: prf, 
+            isD: isD, 
+            cust: document.getElementById('p-cust').value || 'زبون عابر', 
+            date: new Date().toLocaleString('ar-EG')
+        });
+
+        db.ref('stores/'+sid).update({ inventory: inv, sales: sls })
+          .then(() => {
+              toast(isD ? "تم تسجيل الدين في الدفتر 📓" : "تم البيع بنجاح ✅");
+              document.getElementById('p-qty').value = '';
+              document.getElementById('p-cust').value = '';
+          });
+    }
+
+    function payDebt(i) {
+        if(confirm("هل استلمت القروش كاش؟")) {
+            sls[i].isD = false;
+            db.ref('stores/'+sid+'/sales').set(sls).then(()=>toast("تمت تسوية الدين بنجاح"));
+        }
+    }
+
+    function checkSeason() {
+        const m = new Date().getMonth() + 1;
+        let msg = "";
+        if(m === 2 || m === 3) msg = "🌙 تنبيه: موسم رمضان - ركّز على السكر والبلح والزيوت!";
+        if(m === 6 || m === 7) msg = "🐑 تنبيه: عيد الضحية - جهّز بضائع الضيافة والتوابل!";
+        document.getElementById('season-alert').innerText = msg;
+    }
+
+    function toast(m) { 
+        const t = document.getElementById('toast'); 
+        t.innerText = m; t.style.display = 'block'; 
+        setTimeout(()=>t.style.display='none', 3000); 
+    }
+
+    function tab(id, b) { 
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
+        document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); 
+        b.classList.add('active');
+    }
 </script>
 </body>
 </html>
