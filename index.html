@@ -3,191 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بقالة السودان الذكية | M-TAHA</title>
+    <title>إدارة بقالة M-TAHA</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --p: #1e3799; --s: #4a69bd; --gold: #f6b93b; --red: #eb2f06; --green: #38ada9; --bg: #f1f2f6; }
+        :root { --p: #0984e3; --red: #d63031; --green: #00b894; --gold: #f1c40f; }
         * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background: var(--bg); margin: 0; padding-bottom: 70px; }
-        header { background: var(--p); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; }
-        .stats-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 15px; margin-top: -25px; }
-        .stat-card { background: white; padding: 10px; border-radius: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .stat-card b { display: block; font-size: 13px; color: #7f8c8d; }
-        .stat-card span { color: var(--p); font-weight: 900; font-size: 18px; }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .v-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body { background: #f4f7f6; margin: 0; padding-bottom: 70px; }
+        #news-bar { background: var(--gold); padding: 10px; text-align: center; font-weight: bold; display: none; }
+        header { background: var(--p); color: white; padding: 20px; text-align: center; border-radius: 0 0 20px 20px; }
+        .container { padding: 15px; max-width: 500px; margin: auto; }
+        .v-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .v-input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 16px; }
-        .v-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 16px; }
-        .btn-green { background: var(--green); } .btn-red { background: var(--red); }
-        .low-stock { border: 2px solid var(--red) !important; color: var(--red); background: #fff5f5; }
-        .badge-red { background: var(--red); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; }
+        .wa-btn { background: #25D366; color: white; padding: 5px 10px; border-radius: 8px; text-decoration: none; font-size: 12px; display: inline-block; }
+        #reg-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
         nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #ddd; }
-        .nav-link { background: none; border: none; color: #7f8c8d; font-weight: bold; font-size: 14px; }
-        .nav-link.active { color: var(--p); border-bottom: 2px solid var(--p); }
+        .nav-link { background: none; border: none; color: #636e72; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .nav-link.active { color: var(--p); }
         .page { display: none; } .page.active { display: block; }
-        #toast { position: fixed; top: 20px; width: 80%; left: 10%; background: #333; color: white; padding: 12px; border-radius: 10px; text-align: center; display: none; z-index: 1000; font-weight: bold; }
+        .low-stk { color: var(--red); font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="toast"></div>
+<div id="news-bar"></div>
 
-<header>
-    <h3 id="store-title" style="margin:0">بقالة السودان الذكية</h3>
-    <small id="season-alert" style="color:var(--gold); font-weight:bold"></small>
+<div id="reg-screen">
+    <div class="v-card" style="width: 100%; text-align: center;">
+        <h2 style="color:var(--p)">تسجيل متجر جديد</h2>
+        <input type="text" id="reg-name" class="v-input" placeholder="اسم صاحب البقالة">
+        <input type="number" id="reg-phone" class="v-input" placeholder="رقم الهاتف">
+        <button class="btn" style="background:var(--p)" onclick="requestAccess()">إرسال طلب تفعيل</button>
+        <p id="reg-msg" style="margin-top:10px; font-size:12px;"></p>
+    </div>
+</div>
+
+<header id="app-head" style="display:none">
+    <h3 id="store-title">متجري</h3>
+    <div style="font-size:12px">أرباح اليوم: <span id="st-p">0</span> | ديون: <span id="st-d">0</span></div>
 </header>
 
-<div class="stats-bar">
-    <div class="stat-card"><b>أرباح اليوم</b><span id="s-profit">0</span></div>
-    <div class="stat-card"><b>مبيعات كاش</b><span id="s-cash">0</span></div>
-    <div class="stat-card"><b>ديون معلقة</b><span id="s-debt" style="color:var(--red)">0</span></div>
-</div>
-
-<div class="container">
-    <div id="pg-sale" class="page active">
+<div class="container" id="app-body" style="display:none">
+    <div id="p-sale" class="page active">
         <div class="v-card">
-            <h4 style="margin:0 0 10px 0">🧾 فاتورة بيع جديدة</h4>
-            <label style="font-size: 12px;">اختر الصنف:</label>
-            <select id="p-select" class="v-input"></select>
-            <input type="number" id="p-qty" class="v-input" placeholder="الكمية المطلوبة">
-            <input type="text" id="p-cust" class="v-input" placeholder="اسم الزبون (للدين)">
-            <button class="v-btn btn-green" onclick="makeSale(false)">بيع كاش (واقبض) ✅</button>
-            <button class="v-btn btn-red" style="margin-top:10px" onclick="makeSale(true)">تسجيل دين 🤝</button>
-        </div>
-        
-        <div class="v-card">
-            <h4>📦 حالة الرفوف والمخزن</h4>
-            <div id="stock-view"></div>
+            <h4>🧾 مبيعات</h4>
+            <select id="s-item" class="v-input"></select>
+            <input type="number" id="s-qty" class="v-input" placeholder="الكمية">
+            <select id="s-debtor" class="v-input"><option value="">-- كاش --</option></select>
+            <button class="btn" style="background:var(--green)" onclick="doSale()">تأكيد العملية ✅</button>
         </div>
     </div>
 
-    <div id="pg-debt" class="page">
+    <div id="p-stk" class="page">
         <div class="v-card">
-            <h4>📓 دفتر مديونيات الزبائن</h4>
-            <div id="debt-view"></div>
+            <h4>📦 المخزن</h4>
+            <input type="text" id="i-n" class="v-input" placeholder="اسم المنتج">
+            <input type="number" id="i-b" class="v-input" placeholder="سعر الشراء">
+            <input type="number" id="i-s" class="v-input" placeholder="سعر البيع">
+            <input type="number" id="i-q" class="v-input" placeholder="الكمية">
+            <button class="btn" style="background:var(--p)" onclick="addStk()">حفظ المنتج</button>
         </div>
+        <div id="stk-list"></div>
+    </div>
+
+    <div id="p-deb" class="page">
+        <div class="v-card">
+            <h4>📓 المديونين</h4>
+            <input type="text" id="d-n" class="v-input" placeholder="اسم الزبون">
+            <input type="number" id="d-p" class="v-input" placeholder="رقم الموبايل">
+            <button class="btn" style="background:var(--p)" onclick="addDeb()">إضافة زبون</button>
+        </div>
+        <div id="deb-list"></div>
     </div>
 </div>
 
-<nav>
-    <button class="nav-link active" onclick="tab('pg-sale',this)">🏠 الرئيسية</button>
-    <button class="nav-link" onclick="tab('pg-debt',this)">📓 الديون</button>
+<nav id="app-nav" style="display:none">
+    <button class="nav-link active" onclick="tab('p-sale',this)">🏠 بيع</button>
+    <button class="nav-link" onclick="tab('p-stk',this)">📦 مخزن</button>
+    <button class="nav-link" onclick="tab('p-deb',this)">📓 ديون</button>
+    <button class="nav-link" style="color:var(--red)" onclick="localStorage.clear(); location.reload();">🚪 خروج</button>
 </nav>
 
 <script>
-    // إعدادات الداتا بيز
     const cfg = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
     firebase.initializeApp(cfg); const db = firebase.database();
-    const sid = "STORE_01"; 
-    let inv = [], sls = [];
+    let sid = localStorage.getItem('sid'), storeData = null;
 
-    // التحديث اللحظي
-    db.ref('stores/'+sid).on('value', s => {
-        const d = s.val() || {};
-        if(d.status === 'off') {
-            document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h1 style='color:red'>⚠️ المتجر متوقف</h1><p>الرجاء مراجعة الإدارة (محمد طه)</p></div>";
-            return;
-        }
-        inv = d.inventory || []; sls = d.sales || [];
-        document.getElementById('store-title').innerText = d.name || "بقالتنا الذكية";
-        checkSeason(); render();
-    });
+    if(!sid) { document.getElementById('reg-screen').style.display='flex'; }
+    else { checkStatus(); }
 
-    function render() {
-        let profit = 0, cash = 0, debt = 0;
-        const sel = document.getElementById('p-select'); sel.innerHTML = '<option value="">-- اختر صنف --</option>';
-        const view = document.getElementById('stock-view'); view.innerHTML = '';
-        
-        // عرض المخزون
-        inv.forEach((x, i) => {
-            sel.innerHTML += `<option value="${i}">${x.name} (متوفر: ${x.qty})</option>`;
-            const isLow = x.qty < 5;
-            view.innerHTML += `<div class="v-card ${isLow?'low-stock':''}" style="margin-bottom:8px; padding:10px; display:flex; justify-content:space-between; align-items:center">
-                <span>${x.name} ${isLow?'<span class="badge-red">نفد</span>':''}</span>
-                <b>${x.qty} قطعة</b>
-            </div>`;
+    function requestAccess() {
+        const n = document.getElementById('reg-name').value, p = document.getElementById('reg-phone').value;
+        if(!n || !p) return alert("أدخل البيانات");
+        const id = "S_" + Date.now();
+        db.ref('requests/'+id).set({name:n, phone:p, status:'pending'}).then(()=>{
+            localStorage.setItem('sid', id); location.reload();
         });
+    }
 
-        // عرض الديون وحساب الأرباح
-        const dView = document.getElementById('debt-view'); dView.innerHTML = '';
-        sls.forEach((x, i) => {
-            if(!x.isD) { 
-                cash += x.total; 
-                profit += x.profit; 
-            } else { 
-                debt += x.total;
-                dView.innerHTML += `<div class="v-card" style="border-right: 5px solid var(--red)">
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${x.cust}</b>
-                        <span style="color:var(--red); font-weight:bold">${x.total} ج.س</span>
-                    </div>
-                    <small>${x.pname} - ${x.date}</small>
-                    <button onclick="payDebt(${i})" style="width:100%; margin-top:10px; background:var(--green); border:none; color:white; padding:8px; border-radius:5px; font-weight:bold; cursor:pointer">تم استلام المبلغ ✅</button>
-                </div>`;
+    function checkStatus() {
+        db.ref('requests/'+sid).on('value', s => {
+            const d = s.val();
+            if(d && d.status === 'active') {
+                document.getElementById('reg-screen').style.display='none';
+                document.getElementById('app-head').style.display='block';
+                document.getElementById('app-body').style.display='block';
+                document.getElementById('app-nav').style.display='flex';
+                initApp();
+            } else {
+                document.getElementById('reg-screen').style.display='flex';
+                document.getElementById('reg-msg').innerText = "بانتظار تفعيل محمد طه...";
             }
         });
-        document.getElementById('s-profit').innerText = profit.toFixed(1);
-        document.getElementById('s-cash').innerText = cash.toFixed(1);
-        document.getElementById('s-debt').innerText = debt.toFixed(1);
-    }
-
-    function makeSale(isD) {
-        const idx = document.getElementById('p-select').value;
-        const q = parseInt(document.getElementById('p-qty').value);
-        if(idx === "" || isNaN(q)) return toast("الرجاء اختيار صنف وكمية");
-
-        let itm = inv[idx];
-        if(itm.qty < q) return toast("⚠️ لا يوجد كمية كافية في الرف!");
-        
-        const prf = (itm.sell - itm.buy) * q;
-        if(prf < 0 && !confirm("تنبيه: ستبيع بخسارة! هل أنت متأكد؟")) return;
-
-        itm.qty -= q;
-        sls.push({
-            pname: itm.name, 
-            total: itm.sell * q, 
-            profit: prf, 
-            isD: isD, 
-            cust: document.getElementById('p-cust').value || 'زبون عابر', 
-            date: new Date().toLocaleString('ar-EG')
+        db.ref('admin_news').on('value', s => {
+            if(s.val()){ document.getElementById('news-bar').innerText = s.val(); document.getElementById('news-bar').style.display='block'; }
         });
-
-        db.ref('stores/'+sid).update({ inventory: inv, sales: sls })
-          .then(() => {
-              toast(isD ? "تم تسجيل الدين في الدفتر 📓" : "تم البيع بنجاح ✅");
-              document.getElementById('p-qty').value = '';
-              document.getElementById('p-cust').value = '';
-          });
     }
 
-    function payDebt(i) {
-        if(confirm("هل استلمت القروش كاش؟")) {
-            sls[i].isD = false;
-            db.ref('stores/'+sid+'/sales').set(sls).then(()=>toast("تمت تسوية الدين بنجاح"));
-        }
+    function initApp() {
+        db.ref('stores/'+sid).on('value', s => {
+            storeData = s.val() || {inventory:[], sales:[], debtors:[]};
+            updateUI();
+        });
     }
 
-    function checkSeason() {
-        const m = new Date().getMonth() + 1;
-        let msg = "";
-        if(m === 2 || m === 3) msg = "🌙 تنبيه: موسم رمضان - ركّز على السكر والبلح والزيوت!";
-        if(m === 6 || m === 7) msg = "🐑 تنبيه: عيد الضحية - جهّز بضائع الضيافة والتوابل!";
-        document.getElementById('season-alert').innerText = msg;
+    function updateUI() {
+        const si = document.getElementById('s-item'); si.innerHTML = '';
+        storeData.inventory.forEach((x,i) => si.innerHTML += `<option value="${i}">${x.name} (${x.qty})</option>`);
+        
+        const sd = document.getElementById('s-debtor'); sd.innerHTML = '<option value="">-- كاش --</option>';
+        storeData.debtors.forEach((x,i) => sd.innerHTML += `<option value="${i}">${x.name}</option>`);
+
+        let pToday = 0, dTotal = 0;
+        storeData.sales.forEach(x => pToday += x.profit);
+        storeData.debtors.forEach(x => dTotal += x.balance);
+        document.getElementById('st-p').innerText = pToday;
+        document.getElementById('st-d').innerText = dTotal;
+
+        const sl = document.getElementById('stk-list'); sl.innerHTML = '';
+        storeData.inventory.forEach((x,i) => sl.innerHTML += `<div class="v-card ${x.qty<5?'low-stk':''}">
+            ${x.name} | كمية: ${x.qty} | سعر: ${x.sell}
+            <button onclick="delItem('inventory',${i})" style="color:red; background:none; border:none; float:left">حذف</button>
+        </div>`);
+
+        const dl = document.getElementById('deb-list'); dl.innerHTML = '';
+        storeData.debtors.forEach((x,i) => dl.innerHTML += `<div class="v-card">
+            <b>${x.name}</b> | المبلغ: ${x.balance} ج.س <br>
+            <a class="wa-btn" href="https://wa.me/249${x.phone}">واتساب</a>
+            <button onclick="clearDeb(${i})" style="float:left">تسديد</button>
+        </div>`);
     }
 
-    function toast(m) { 
-        const t = document.getElementById('toast'); 
-        t.innerText = m; t.style.display = 'block'; 
-        setTimeout(()=>t.style.display='none', 3000); 
+    function addStk() {
+        const n=document.getElementById('i-n').value, b=parseFloat(document.getElementById('i-b').value), s=parseFloat(document.getElementById('i-s').value), q=parseInt(document.getElementById('i-q').value);
+        if(!n || isNaN(b)) return;
+        if(!storeData.inventory) storeData.inventory = [];
+        storeData.inventory.push({name:n, buy:b, sell:s, qty:q});
+        db.ref('stores/'+sid+'/inventory').set(storeData.inventory);
     }
 
-    function tab(id, b) { 
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
+    function addDeb() {
+        const n=document.getElementById('d-n').value, p=document.getElementById('d-p').value;
+        if(!n || !p) return;
+        if(!storeData.debtors) storeData.debtors = [];
+        storeData.debtors.push({name:n, phone:p, balance:0});
+        db.ref('stores/'+sid+'/debtors').set(storeData.debtors);
+    }
+
+    function doSale() {
+        const idx=document.getElementById('s-item').value, q=parseInt(document.getElementById('s-qty').value), dIdx=document.getElementById('s-debtor').value;
+        if(idx==="" || isNaN(q)) return;
+        let itm = storeData.inventory[idx];
+        if(itm.qty < q) return alert("المخزن لا يكفي");
+        itm.qty -= q;
+        const profit = (itm.sell - itm.buy) * q, total = itm.sell * q;
+        if(dIdx !== "") { storeData.debtors[dIdx].balance += total; }
+        else { if(!storeData.sales) storeData.sales = []; storeData.sales.push({profit, total}); }
+        db.ref('stores/'+sid).set(storeData);
+    }
+
+    function clearDeb(i) { if(confirm("تسديد كامل؟")) { storeData.debtors[i].balance = 0; db.ref('stores/'+sid+'/debtors').set(storeData.debtors); }}
+    function delItem(path, i) { if(confirm("حذف؟")) { storeData[path].splice(i,1); db.ref('stores/'+sid+'/'+path).set(storeData[path]); }}
+    function tab(id, b) {
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-        document.getElementById(id).classList.add('active'); 
-        b.classList.add('active');
+        document.getElementById(id).classList.add('active'); b.classList.add('active');
     }
 </script>
 </body>
