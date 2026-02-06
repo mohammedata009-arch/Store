@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة محمد طه</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family:'Cairo'; background:#ecf0f1; padding:20px; }
+        .card { background:#fff; padding:20px; border-radius:15px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+        input, button { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ddd; }
+        button { background:#3498db; color:#fff; border:none; cursor:pointer; font-weight:700; }
+        table { width:100%; border-collapse:collapse; margin-top:10px; }
+        th, td { padding:10px; border:1px solid #eee; text-align:center; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📢 إعلان عام</h2>
+        <input id="ad-txt" placeholder="نص الإعلان">
+        <button onclick="sendAd(true)">تفعيل</button>
+        <button style="background:gray" onclick="sendAd(false)">إخفاء</button>
+    </div>
+    <div class="card">
+        <h2>🔑 إضافة مشترك جديد</h2>
+        <input id="s-n" placeholder="اسم الدكان">
+        <input id="s-c" placeholder="كود التفعيل">
+        <button style="background:#2ecc71" onclick="addS()">اعتماد</button>
+    </div>
+    <div class="card">
+        <h2>🏪 الدكاكين النشطة</h2>
+        <div id="list"></div>
+    </div>
+
+<script>
+    const firebaseConfig = { apiKey: "AIza...", databaseURL: "https://...", projectId: "..." };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    function sendAd(s) { db.ref('global_ads').set({text:document.getElementById('ad-txt').value, active:s}); alert("تم"); }
+    function addS() { const n=document.getElementById('s-n').value, c=document.getElementById('s-c').value; db.ref('activations/'+c).set({name:n, active:true}); alert("تم الحفظ"); }
+    db.ref('activations').on('value', s=>{ let h='<table><tr><th>الدكان</th><th>الكود</th></tr>'; s.forEach(c=>{ h+=`<tr><td>${c.val().name}</td><td>${c.key}</td></tr>`; }); h+='</table>'; document.getElementById('list').innerHTML=h; });
+</script>
+</body>
+</html>
