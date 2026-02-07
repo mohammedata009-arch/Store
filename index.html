@@ -13,30 +13,35 @@
         .container { padding:15px; max-width:600px; margin:auto; }
         .page { display:none; } .page.active { display:block; }
         .card { background:white; border-radius:15px; padding:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:15px; }
-        header { background: var(--secondary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; }
+        header { background: var(--secondary); color: white; padding: 20px; text-align: center; border-radius: 0 0 25px 25px; position: relative; }
         input, select { width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-top:5px; font-family:'Cairo'; box-sizing: border-box; }
         .main-btn { width:100%; padding:12px; border:none; border-radius:10px; background:var(--primary); color:white; font-weight:bold; cursor:pointer; margin-top:10px; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -30px; padding: 0 15px; }
         .stat-card { background: white; padding: 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card b { color: var(--primary); font-size: 16px; }
-        .bottom-nav { position:fixed; bottom:0; width:100%; background:white; display:flex; justify-content:space-around; padding:10px 0; box-shadow:0 -5px 15px rgba(0,0,0,0.05); }
+        .bottom-nav { position:fixed; bottom:0; width:100%; background:white; display:flex; justify-content:space-around; padding:10px 0; box-shadow:0 -5px 15px rgba(0,0,0,0.05); z-index: 100; }
         .nav-item { border:none; background:none; color:#bdc3c7; font-size:12px; cursor:pointer; font-family:'Cairo'; }
         .nav-item.active { color:var(--primary); font-weight:bold; }
+        .logout-btn { position: absolute; left: 10px; top: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; font-size: 10px; cursor: pointer; }
         @media print { .bottom-nav, .main-btn, header, input, select, .no-print { display: none !important; } .page { display: block !important; } }
     </style>
 </head>
 <body>
 
-<div id="lock-screen" style="display:flex; position:fixed; inset:0; background:white; z-index:9999; align-items:center; justify-content:center; text-align:center;">
-    <div class="card">
-        <h2>نظام M-TAHA</h2>
-        <input type="text" id="reg-sid" placeholder="معرف المتجر">
-        <button class="main-btn" onclick="checkAuth()">دخول</button>
+<div id="lock-screen" style="display:flex; position:fixed; inset:0; background:var(--bg); z-index:9999; align-items:center; justify-content:center; text-align:center;">
+    <div class="card" style="width: 85%;">
+        <h2 style="color:var(--secondary)">نظام M-TAHA</h2>
+        <p>يرجى إدخال معرف المتجر الخاص بك</p>
+        <input type="text" id="reg-sid" placeholder="أدخل المعرف (ID)">
+        <button class="main-btn" onclick="checkAuth()">دخول النظام</button>
     </div>
 </div>
 
 <div id="app-content" style="display:none;">
-    <header><h3 id="display-store-name">تحميل...</h3></header>
+    <header>
+        <button class="logout-btn" onclick="logout()">خروج</button>
+        <h3 id="display-store-name">تحميل...</h3>
+    </header>
     
     <div class="stat-grid">
         <div class="stat-card"><span>إجمالي المبيعات</span><br><b id="s-total">0</b></div>
@@ -52,14 +57,14 @@
                 <p>قيمة بضاعة المخزن: <b id="stock-val">0</b></p>
             </div>
             <button class="main-btn" style="background:var(--warning)" onclick="window.print()">🖨️ طباعة تقرير شامل</button>
-            <button class="main-btn" style="background:var(--danger)" onclick="dailyReset()">🧹 تصفير ليوم جديد (مبيعات ومصاريف)</button>
+            <button class="main-btn" style="background:var(--danger)" onclick="dailyReset()">🧹 تصفير ليوم جديد</button>
         </div>
 
         <div id="sell" class="page">
             <div class="card">
                 <h3>🧾 عملية بيع</h3>
-                <input type="text" id="search" placeholder="بحث..." onkeyup="search()">
-                <select id="p-select" size="3" onchange="document.getElementById('p-price-edit').value = storeData.p[this.value].sell"></select>
+                <input type="text" id="search" placeholder="بحث عن صنف..." onkeyup="search()">
+                <select id="p-select" size="3" onchange="if(this.value!=='') document.getElementById('p-price-edit').value = storeData.p[this.value].sell"></select>
                 <input type="number" id="p-qty" placeholder="الكمية">
                 <input type="number" id="p-price-edit" placeholder="السعر">
                 <button class="main-btn" onclick="doSale()">تأكيد البيع ✅</button>
@@ -73,7 +78,7 @@
                 <input id="in-buy" type="number" placeholder="سعر الشراء">
                 <input id="in-sell" type="number" placeholder="سعر البيع">
                 <input id="in-q" type="number" placeholder="الكمية">
-                <button class="main-btn" onclick="saveStock()">حفظ</button>
+                <button class="main-btn" onclick="saveStock()">حفظ في المخزن</button>
             </div>
             <div id="full-inventory"></div>
         </div>
@@ -98,6 +103,7 @@
 </div>
 
 <script>
+// الإعدادات والربط
 const firebaseConfig = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
 firebase.initializeApp(firebaseConfig);
 const rdb = firebase.database();
@@ -105,28 +111,42 @@ const rdb = firebase.database();
 let sid = localStorage.getItem('m_taha_sid');
 let storeData = { p: [], s: [], e: [] };
 
+// دالة الدخول الجديدة
 function checkAuth() {
-    sid = document.getElementById('reg-sid').value.trim();
-    if(!sid) return;
-    rdb.ref('requests/'+sid).once('value', s => {
+    let inputId = document.getElementById('reg-sid').value.trim();
+    if(!inputId) return alert("أدخل المعرف أولاً");
+    
+    rdb.ref('requests/' + inputId).once('value', s => {
         if(s.exists() && s.val().status === 'active') {
-            localStorage.setItem('m_taha_sid', sid);
+            localStorage.setItem('m_taha_sid', inputId);
             location.reload();
-        } else { alert("المعرف غير مفعّل"); }
-    });
-}
-
-if(sid) {
-    rdb.ref('requests/'+sid).on('value', s => {
-        if(s.val()?.status === 'active') {
-            document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-            document.getElementById('display-store-name').innerText = s.val().name;
-            rdb.ref('stores/'+sid).on('value', ss => { storeData = ss.val() || { p: [], s: [], e: [] }; render(); });
+        } else {
+            alert("المعرف غير مسجل أو غير مفعل من الإدارة");
         }
     });
 }
 
+function logout() { localStorage.removeItem('m_taha_sid'); location.reload(); }
+
+// التحقق من الجلسة وتحميل الميزات
+if(sid) {
+    rdb.ref('requests/' + sid).on('value', s => {
+        if(s.exists() && s.val().status === 'active') {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('display-store-name').innerText = "متجر: " + s.val().name;
+            
+            rdb.ref('stores/' + sid).on('value', ss => { 
+                storeData = ss.val() || { p: [], s: [], e: [] }; 
+                render(); 
+            });
+        } else {
+            logout();
+        }
+    });
+}
+
+// ميزات النظام (بقت كما هي بدون تغيير في المنطق)
 function tab(id, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -137,12 +157,14 @@ function tab(id, btn) {
 function search() {
     let q = document.getElementById('search').value.toLowerCase();
     let s = document.getElementById('p-select'); s.innerHTML = "";
-    (storeData.p || []).forEach((p, i) => { if(p.name.toLowerCase().includes(q)) s.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`; });
+    (storeData.p || []).forEach((p, i) => { 
+        if(p.name.toLowerCase().includes(q)) s.innerHTML += `<option value="${i}">${p.name} (متوفر: ${p.qty})</option>`; 
+    });
 }
 
 function doSale() {
     let i = document.getElementById('p-select').value, q = +document.getElementById('p-qty').value, pr = +document.getElementById('p-price-edit').value;
-    if(i==="" || q<=0 || storeData.p[i].qty < q) return alert("خطأ في الكمية");
+    if(i==="" || q<=0 || storeData.p[i].qty < q) return alert("خطأ في الكمية أو الصنف");
     if(!storeData.s) storeData.s = [];
     storeData.s.push({ n: storeData.p[i].name, q, t: q*pr, c: q*storeData.p[i].buy });
     storeData.p[i].qty -= q;
@@ -151,10 +173,11 @@ function doSale() {
 
 function saveStock() {
     let n = document.getElementById('in-name').value, b = +document.getElementById('in-buy').value, s = +document.getElementById('in-sell').value, q = +document.getElementById('in-q').value;
-    if(!n) return;
+    if(!n || q <= 0) return alert("أكمل بيانات الصنف");
     if(!storeData.p) storeData.p = [];
     storeData.p.push({name:n, buy:b, sell:s, qty:q});
     sync();
+    alert("تمت الإضافة للمخزن");
 }
 
 function addExp() {
@@ -166,14 +189,14 @@ function addExp() {
 }
 
 function dailyReset() {
-    if(confirm("هل تريد تصفير المبيعات والمصاريف ليوم جديد؟ (المخزن لن يتأثر)")) {
+    if(confirm("سيتم تصفير المبيعات والمصاريف فقط، هل أنت متأكد؟")) {
         storeData.s = [];
         storeData.e = [];
         sync();
     }
 }
 
-function sync() { rdb.ref('stores/'+sid).set(storeData); }
+function sync() { rdb.ref('stores/' + sid).set(storeData); }
 
 function render() {
     let ts=0, tc=0, te=0, sv=0;
@@ -181,19 +204,19 @@ function render() {
     (storeData.e || []).forEach(x => { te += x.a; });
     (storeData.p || []).forEach(x => { sv += (x.qty * x.buy); });
 
-    document.getElementById('s-total').innerText = ts;
-    document.getElementById('p-total').innerText = ts - tc;
-    document.getElementById('e-total').innerText = te;
-    document.getElementById('final-profit').innerText = (ts - tc) - te;
-    document.getElementById('stock-val').innerText = sv;
+    document.getElementById('s-total').innerText = ts.toLocaleString();
+    document.getElementById('p-total').innerText = (ts - tc).toLocaleString();
+    document.getElementById('e-total').innerText = te.toLocaleString();
+    document.getElementById('final-profit').innerText = ((ts - tc) - te).toLocaleString();
+    document.getElementById('stock-val').innerText = sv.toLocaleString();
 
-    let invDiv = document.getElementById('full-inventory'); invDiv.innerHTML = "<h4>الجرد:</h4>";
+    let invDiv = document.getElementById('full-inventory'); invDiv.innerHTML = "<h4>قائمة المخزن:</h4>";
     (storeData.p || []).forEach((p, i) => {
-        invDiv.innerHTML += `<div class="card">${p.name} - كمية: ${p.qty} <button onclick="storeData.p.splice(${i},1);sync()" style="color:red; float:left; border:none; background:none;">حذف</button></div>`;
+        invDiv.innerHTML += `<div class="card">${p.name} - كمية: ${p.qty} <button onclick="if(confirm('حذف؟')){storeData.p.splice(${i},1);sync();}" style="color:red; float:left; border:none; background:none; cursor:pointer;">حذف</button></div>`;
     });
 
     let eDiv = document.getElementById('exp-list'); eDiv.innerHTML = "<h4>سجل المصاريف:</h4>";
-    (storeData.e || []).forEach(x => { eDiv.innerHTML += `<div>${x.n}: ${x.a} ج</div>`; });
+    (storeData.e || []).forEach(x => { eDiv.innerHTML += `<div>• ${x.n}: ${x.a} ج</div>`; });
 }
 </script>
 </body>
