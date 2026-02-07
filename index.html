@@ -3,90 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-TAHA ERP Pro</title>
+    <title>M-TAHA Pro v4.0</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --p-color: #10b981; --s-color: #1e293b; }
-        body { font-family: 'Cairo', sans-serif; background: #f8fafc; color: var(--s-color); }
-        .app-card { border: none; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .nav-fixed { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; z-index: 1000; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; border: none; background: none; color: #94a3b8; font-weight: 700; font-size: 13px; }
-        .nav-item.active { color: var(--p-color); }
-        .page { display: none; padding: 20px; }
+        :root { --p-green: #059669; --s-bg: #f1f5f9; }
+        body { font-family: 'Cairo', sans-serif; background: var(--s-bg); color: #1e293b; margin: 0; }
+        #auth-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; align-items:center; justify-content:center; }
+        #main-app { display: none; padding-bottom: 80px; }
+        .app-card { border: none; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 1rem; padding: 15px; background: white; }
+        .nav-fixed { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; z-index: 1000; padding: 12px 0; }
+        .nav-item { flex: 1; text-align: center; border: none; background: none; color: #64748b; font-weight: 700; font-size: 13px; }
+        .nav-item.active { color: var(--p-green); }
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
-        .ticker { background: #fbbf24; color: #000; padding: 10px; font-weight: 900; position: sticky; top: 0; z-index: 1100; display: none; text-align: center; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .ticker { background: #fbbf24; color: #000; padding: 8px; font-weight: 900; position: sticky; top: 0; z-index: 1100; display: none; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="announcement" class="ticker"></div>
 
-<div id="auth-screen" class="vh-100 vw-100 bg-white d-flex align-items-center justify-content-center position-fixed" style="z-index: 2000;">
-    <div class="p-4 w-100" style="max-width: 400px;">
-        <div class="text-center mb-4">
-            <h1 class="fw-black text-success">M-TAHA</h1>
-            <p class="text-muted">نظام إدارة البقالة الذكي</p>
-        </div>
-        <div class="card app-card p-4 text-center">
-            <label class="form-label fw-bold">كود الدخول</label>
-            <input type="text" id="auth-input" inputmode="numeric" class="form-control form-control-lg mb-3 border-2 text-center" placeholder="أدخل كودك الخاص" style="-webkit-text-security: disc;">
-            <button class="btn btn-success btn-lg w-100 fw-bold" onclick="handleAuth()">دخول آمن</button>
+<div id="auth-screen">
+    <div class="p-4 w-100 text-center" style="max-width: 400px;">
+        <h1 class="fw-black text-success mb-2">M-TAHA</h1>
+        <p class="text-muted small mb-4">أدخل كود التفعيل (حروف وأرقام)</p>
+        <div class="card app-card shadow-lg">
+            <input type="text" id="auth-input" class="form-control form-control-lg mb-3 text-center border-2" placeholder="أدخل الكود هنا" style="-webkit-text-security: disc; font-weight: bold;">
+            <button id="login-btn" class="btn btn-success btn-lg w-100 fw-bold shadow" onclick="handleAuth()">دخول آمن</button>
+            <p id="err" class="text-danger mt-3 small" style="display:none">⚠️ الكود غير صحيح أو المتجر غير مفعل</p>
         </div>
     </div>
 </div>
 
-<div id="app-ui" style="display: none;">
-    <header class="bg-white p-3 shadow-sm d-flex justify-content-between">
-        <b class="text-success" id="ui-store-name">...</b>
-        <button class="btn btn-sm btn-outline-danger" onclick="logout()">خروج</button>
+<div id="main-app">
+    <header class="bg-white p-3 shadow-sm sticky-top d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-success" id="ui-store-name">...</span>
+        <button class="btn btn-sm btn-outline-danger fw-bold" onclick="logout()">خروج</button>
     </header>
 
-    <div class="container-fluid mb-5 pb-5">
+    <div class="container-fluid">
         <div id="p-dashboard" class="page active">
             <div class="row g-3">
-                <div class="col-6"><div class="card app-card p-3"><span>صافي الربح</span><h3 id="res-profit">0</h3></div></div>
-                <div class="col-6"><div class="card app-card p-3"><span class="text-danger">الديون</span><h3 id="res-debt">0</h3></div></div>
+                <div class="col-6"><div class="card app-card"> <small>الأرباح</small> <h4 id="res-profit">0</h4> </div></div>
+                <div class="col-6"><div class="card app-card"> <small>المخزون</small> <h4 id="res-stock">0</h4> </div></div>
             </div>
-            <button class="btn btn-dark w-100 mt-4 py-3" onclick="window.print()">🖨️ طباعة التقرير</button>
+            <button class="btn btn-dark w-100 py-3 mt-3 fw-bold" onclick="window.print()">🖨️ طباعة التقرير</button>
         </div>
 
         <div id="p-sales" class="page">
-            <div class="card app-card p-3">
-                <h5>🧾 مبيعات</h5>
+            <div class="card app-card">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">🧾 فاتورة بيع</h6>
                 <input type="text" id="p-search" class="form-control mb-2" placeholder="بحث..." onkeyup="searchPr()">
-                <select id="p-list" class="form-select mb-3" size="4"></select>
-                <input type="number" id="s-qty" class="form-control mb-2" placeholder="الكمية">
-                <input type="number" id="s-price" class="form-control mb-3" placeholder="السعر">
-                <button class="btn btn-success w-100 py-3" onclick="saveSale()">تأكيد العملية ✅</button>
+                <select id="p-list" class="form-select mb-3" size="5" onchange="updatePrice()"></select>
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><input type="number" id="s-qty" class="form-control" value="1"></div>
+                    <div class="col-6"><input type="number" id="s-price" class="form-control" placeholder="السعر"></div>
+                </div>
+                <button class="btn btn-success w-100 py-3 fw-bold" onclick="saveSale()">تأكيد العملية ✅</button>
             </div>
         </div>
 
         <div id="p-stock" class="page">
-            <div class="card app-card p-3 mb-3">
-                <h5>📦 إضافة بضاعة</h5>
+            <div class="card app-card">
+                <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary">📦 إضافة صنف</h6>
                 <input id="in-name" class="form-control mb-2" placeholder="اسم الصنف">
                 <div class="row g-2 mb-3">
                     <div class="col-6"><input id="in-buy" type="number" class="form-control" placeholder="شراء"></div>
                     <div class="col-6"><input id="in-sell" type="number" class="form-control" placeholder="بيع"></div>
                 </div>
-                <button class="btn btn-primary w-100" onclick="addPr()">حفظ في المخزن</button>
+                <button class="btn btn-primary w-100 fw-bold" onclick="addPr()">حفظ بالمخزن</button>
             </div>
-            <div id="stock-render"></div>
+            <div id="stock-list"></div>
         </div>
     </div>
+
+    <nav class="nav-fixed shadow-lg">
+        <button class="nav-item active" onclick="tab('dashboard', this)">📊 الحسابات</button>
+        <button class="nav-item" onclick="tab('sales', this)">🧾 المبيعات</button>
+        <button class="nav-item" onclick="tab('stock', this)">📦 المخزن</button>
+    </nav>
 </div>
 
-<nav class="nav-fixed">
-    <button class="nav-item active" onclick="tab('dashboard', this)">📊 حسابات</button>
-    <button class="nav-item" onclick="tab('sales', this)">🧾 مبيعات</button>
-    <button class="nav-item" onclick="tab('stock', this)">📦 مخزن</button>
-</nav>
-
 <script>
-// الإعدادات من صورتك مباشرة
 const firebaseConfig = {
   apiKey: "AIzaSyAYJwvrBLc_svZ2IcWBzrBbK_ZpUqX0G8M",
   authDomain: "store-project-b023e.firebaseapp.com",
@@ -105,24 +107,21 @@ let data = { p: [], s: [] };
 
 function handleAuth() {
     const code = document.getElementById('auth-input').value.trim();
+    if(!code) return;
+    document.getElementById('login-btn').innerText = "...";
     rdb.ref('active_stores/'+code).once('value', s => {
-        if(s.exists()){ localStorage.setItem('m_taha_session', code); location.reload(); }
-        else alert("كود التفعيل غير صحيح!");
+        if(s.exists()){ localStorage.setItem('m_taha_session', code); sid = code; showApp(s.val().name); }
+        else { document.getElementById('err').style.display='block'; document.getElementById('login-btn').innerText="دخول آمن"; }
     });
 }
 
-if(sid) {
-    rdb.ref('active_stores/'+sid).on('value', s => {
-        if(!s.exists()) logout();
-        else {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app-ui').style.display = 'block';
-            document.getElementById('ui-store-name').innerText = s.val().name;
-            rdb.ref('stores_data/'+sid).on('value', ss => {
-                data = ss.val() || { p: [], s: [] };
-                render();
-            });
-        }
+function showApp(name) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('ui-store-name').innerText = name;
+    rdb.ref('stores_data/'+sid).on('value', ss => {
+        data = ss.val() || { p: [], s: [] };
+        render();
     });
     rdb.ref('admin_announcement').on('value', s => {
         const t = document.getElementById('announcement');
@@ -131,6 +130,8 @@ if(sid) {
     });
 }
 
+if(sid) rdb.ref('active_stores/'+sid).once('value', s => { if(s.exists()) showApp(s.val().name); else logout(); });
+
 function tab(t, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -138,22 +139,27 @@ function tab(t, btn) {
     btn.classList.add('active');
 }
 
+function updatePrice() {
+    const i = document.getElementById('p-list').value;
+    if(i !== "") document.getElementById('s-price').value = data.p[i].sell;
+}
+
 function searchPr() {
     const q = document.getElementById('p-search').value.toLowerCase();
-    const list = document.getElementById('p-list'); list.innerHTML = "";
+    const l = document.getElementById('p-list'); l.innerHTML = "";
     (data.p || []).forEach((p, i) => {
-        if(p.name.toLowerCase().includes(q)) list.innerHTML += `<option value="${i}">${p.name}</option>`;
+        if(p.name.toLowerCase().includes(q)) l.innerHTML += `<option value="${i}">${p.name}</option>`;
     });
 }
 
 function saveSale() {
-    const idx = document.getElementById('p-list').value;
-    const qty = +document.getElementById('s-qty').value;
+    const i = document.getElementById('p-list').value;
+    const q = +document.getElementById('s-qty').value;
     const pr = +document.getElementById('s-price').value;
-    if(idx==="" || qty <= 0) return alert("أكمل البيانات");
+    if(i === "" || q <= 0) return alert("أكمل البيانات");
     if(!data.s) data.s = [];
-    data.s.push({ n: data.p[idx].name, q: qty, t: qty*pr, c: qty*data.p[idx].buy });
-    sync();
+    data.s.push({ n: data.p[i].name, q: q, t: q*pr, c: q*data.p[i].buy });
+    rdb.ref('stores_data/'+sid).set(data);
     alert("تم البيع ✅");
 }
 
@@ -161,26 +167,28 @@ function addPr() {
     const n = document.getElementById('in-name').value, b = +document.getElementById('in-buy').value, s = +document.getElementById('in-sell').value;
     if(!n || b<=0) return alert("أكمل البيانات");
     if(!data.p) data.p = [];
-    data.p.push({name:n, buy:b, sell:s, qty:0});
-    sync();
+    data.p.push({name:n, buy:b, sell:s});
+    rdb.ref('stores_data/'+sid).set(data);
+    document.getElementById('in-name').value = "";
 }
-
-function sync() { rdb.ref('stores_data/'+sid).set(data); }
 
 function render() {
-    let profit = 0;
-    (data.s || []).forEach(x => { profit += (x.t - x.c); });
+    let profit = 0, stock = 0;
+    (data.s || []).forEach(x => profit += (x.t - x.c));
+    (data.p || []).forEach(x => stock += x.buy);
     document.getElementById('res-profit').innerText = profit.toLocaleString() + " ج";
-    const inv = document.getElementById('stock-render'); inv.innerHTML = "";
+    document.getElementById('res-stock').innerText = stock.toLocaleString() + " ج";
+    const sl = document.getElementById('stock-list'); sl.innerHTML = "";
     (data.p || []).forEach((p, i) => {
-        inv.innerHTML += `<div class="card app-card p-3 mb-2 d-flex flex-row justify-content-between">
-            <b>${p.name}</b>
-            <button class="btn btn-sm text-danger" onclick="delPr(${i})">حذف</button>
+        sl.innerHTML += `<div class="card app-card d-flex flex-row justify-content-between">
+            <b>${p.name} <br><small>${p.sell} ج</small></b>
+            <button class="btn btn-sm btn-outline-danger" onclick="delPr(${i})">حذف</button>
         </div>`;
     });
+    searchPr();
 }
 
-function delPr(i) { if(confirm("حذف؟")) { data.p.splice(i,1); sync(); } }
+function delPr(i) { if(confirm("حذف؟")) { data.p.splice(i,1); rdb.ref('stores_data/'+sid).set(data); } }
 function logout() { localStorage.clear(); location.reload(); }
 </script>
 </body>
