@@ -3,128 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام M-TAHA Smart</title>
+    <title>نظام M-TAHA المتكامل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary:#27ae60; --secondary:#2c3e50; --bg:#f4f7f6; --danger:#e74c3c; --warning:#f39c12; --info:#3498db; --purple:#8e44ad; }
-        body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:100px; color: #333; -webkit-tap-highlight-color: transparent; }
-        
-        .ticker { background: var(--secondary); color: white; padding: 10px 0; overflow: hidden; white-space: nowrap; font-size: 13px; font-weight: bold; }
-        .ticker span { display: inline-block; animation: move 20s linear infinite; padding-right: 100%; }
-        @keyframes move { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-
-        .page { display: none; padding: 15px; animation: fadeIn 0.3s; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        header { background: var(--secondary); color: white; padding: 20px 0 45px 0; text-align: center; border-radius: 0 0 30px 30px; }
+        body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:100px; color: #333; }
+        header { background: var(--secondary); color: white; padding: 15px 15px 45px 15px; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
+        .logout-btn { position: absolute; left: 15px; top: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: -30px 15px 0 15px; }
-        .stat-card { background: white; padding: 12px; border-radius: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 4px solid var(--primary); }
-        .stat-card b { font-size: 18px; color: var(--primary); display: block; }
-
+        .stat-card { background: white; padding: 12px; border-radius: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 10px; font-family: 'Cairo'; box-sizing: border-box; font-size: 15px; outline: none; }
-        input:focus { border-color: var(--primary); }
-        .main-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .main-btn:active { transform: scale(0.95); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        th { background: #f8f9fa; padding: 12px; font-size: 13px; border-bottom: 2px solid #eee; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
-        .row-danger { background: #fff5f5; color: #d32f2f; font-weight: 900; }
-        .row-warning { background: #fffdf0; color: #af7a07; }
-        .row-success { background: #f0fff4; color: #2d6a4f; }
-
-        .bottom-nav { position:fixed; bottom:0; width:100%; background:white; display:flex; justify-content:space-around; padding:12px 0; box-shadow:0 -5px 20px rgba(0,0,0,0.1); z-index:1000; }
-        .nav-item { border:none; background:none; color:#bdc3c7; font-size: 11px; cursor:pointer; font-family:'Cairo'; transition: 0.3s; }
-        .nav-item.active { color:var(--primary); font-weight:900; transform: translateY(-3px); }
-
-        #toast { visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); }
-        #toast.show { visibility: visible; animation: fadeinout 2.5s; }
-        @keyframes fadeinout { 0%,100% {opacity:0} 10%,90% {opacity:1} }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 10px; font-family: 'Cairo'; box-sizing: border-box; }
+        .main-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
+        .bottom-nav { position:fixed; bottom:0; width:100%; background:white; display:flex; justify-content:space-around; padding:12px 0; box-shadow:0 -5px 25px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { border:none; background:none; color:#bdc3c7; font-size: 11px; cursor:pointer; font-family:'Cairo'; }
+        .nav-item.active { color:var(--primary); font-weight:900; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; padding: 8px; font-size: 12px; border-bottom: 2px solid #eee; }
+        td { padding: 10px; text-align: center; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
+        .sale-item { border-right: 4px solid var(--primary); margin-bottom: 8px; padding: 10px; background: #f9f9f9; border-radius: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div id="toast">تمت العملية بنجاح ✅</div>
-
-<div class="ticker">
-    <span>نظام M-TAHA المتكامل .. راقب الإحصائيات لتوفير النواقص .. اللون الأحمر يعني نفاذ الكمية.</span>
-</div>
-
-<header><h3>M-TAHA SMART</h3></header>
+<header>
+    <button class="logout-btn" onclick="logout()">خروج 🚪</button>
+    <h3>نظام M-TAHA</h3>
+</header>
 
 <div class="stat-grid">
     <div class="stat-card"><span>مبيعات اليوم</span><b id="s-total">0</b></div>
-    <div class="stat-card" style="border-color: var(--purple);"><span>إجمالي الديون</span><b id="d-total" style="color:var(--purple)">0</b></div>
+    <div class="stat-card"><span>إجمالي الديون</span><b id="d-total" style="color:var(--danger)">0</b></div>
 </div>
 
-<div id="app-content">
-    <div id="stats" class="page">
-        <div class="card">
-            <h4>📈 جدول النواقص الذكي</h4>
-            <table id="stock-analysis-table">
-                <thead><tr><th>الصنف</th><th>المتوفر</th><th>الحالة</th></tr></thead>
-                <tbody id="analysis-body"></tbody>
-            </table>
-        </div>
-        <div class="card">
-            <h4>🔥 الأكثر طلباً اليوم</h4>
-            <div id="top-selling-list"></div>
-        </div>
-    </div>
-
+<div class="container">
     <div id="home" class="page active">
         <div class="card">
-            <h4>📊 التقارير</h4>
-            <button class="main-btn" onclick="window.print()" style="background:var(--info)">🖨️ طباعة التقرير العام (PDF)</button>
-            <button class="main-btn" style="background:var(--danger); margin-top:10px;" onclick="dailyReset()">🧹 تصفير المبيعات اليومية</button>
+            <h4>🧾 سجل مبيعات اليوم المفصل</h4>
+            <div id="sales-list-detailed"></div>
+            <button class="main-btn" style="background:var(--danger); margin-top:15px;" onclick="dailyReset()">🧹 تصفير اليومية</button>
         </div>
     </div>
 
-    <div id="sell" class="page">
+    <div id="stats" class="page">
         <div class="card">
-            <h3>🧾 فاتورة بيع</h3>
-            <input type="text" id="search" placeholder="ابحث عن صنف..." onkeyup="render()">
-            <select id="p-select" size="5" style="height: 150px;"></select>
-            <input type="number" id="p-qty" placeholder="الكمية">
-            <button class="main-btn" onclick="doSale()">تأكيد البيع ✅</button>
+            <h4>📈 حالة المخزن (النواقص)</h4>
+            <table id="analysis-table">
+                <thead><tr><th>الصنف</th><th>الكمية</th><th>الحالة</th></tr></thead>
+                <tbody id="analysis-body"></tbody>
+            </table>
         </div>
     </div>
 
     <div id="stock" class="page">
         <div class="card">
-            <h3>📦 توريد بضاعة</h3>
+            <h3 id="stock-title">📦 المخزن</h3>
+            <input id="in-idx" type="hidden">
             <input id="in-name" placeholder="اسم المنتج">
-            <div style="display: flex; gap: 5px;">
-                <input id="in-buy" type="number" placeholder="شراء">
-                <input id="in-sell" type="number" placeholder="بيع">
-            </div>
+            <input id="in-sell" type="number" placeholder="سعر البيع">
             <input id="in-q" type="number" placeholder="الكمية">
-            <label style="font-size: 11px;">تاريخ الصلاحية (اختياري):</label>
-            <input id="in-exp" type="date">
-            <button class="main-btn" onclick="saveStock()">حفظ في المخزن</button>
+            <button class="main-btn" id="stock-btn" onclick="saveStock()">حفظ</button>
         </div>
         <div id="full-inventory"></div>
     </div>
 
+    <div id="sell" class="page">
+        <div class="card">
+            <h3>🧾 بيع</h3>
+            <input type="text" id="search" placeholder="ابحث..." onkeyup="render()">
+            <select id="p-select" size="5"></select>
+            <input type="number" id="p-qty" placeholder="الكمية">
+            <button class="main-btn" onclick="doSale()">تأكيد البيع</button>
+        </div>
+    </div>
+
     <div id="debts" class="page">
         <div class="card">
-            <h3>📝 سجل الديون</h3>
-            <input id="d-name" placeholder="اسم الشخص">
+            <h3>📝 الديون</h3>
+            <input id="d-name" placeholder="الاسم">
             <input id="d-amt" type="number" placeholder="المبلغ">
-            <textarea id="d-notes" placeholder="ملاحظات.."></textarea>
-            <button class="main-btn" style="background:var(--purple)" onclick="addDebt()">تسجيل الدين</button>
+            <button class="main-btn" style="background:var(--purple)" onclick="addDebt()">حفظ</button>
         </div>
         <div id="debts-list"></div>
     </div>
 </div>
 
 <div class="bottom-nav">
+    <button class="nav-item active" onclick="tab('home',this)">📊 مبيعات</button>
     <button class="nav-item" onclick="tab('stats',this)">📈 إحصاء</button>
-    <button class="nav-item active" onclick="tab('home',this)">📊 حسابات</button>
     <button class="nav-item" onclick="tab('sell',this)">🧾 بيع</button>
     <button class="nav-item" onclick="tab('stock',this)">📦 مخزن</button>
     <button class="nav-item" onclick="tab('debts',this)">📝 ديون</button>
@@ -135,14 +104,9 @@ const firebaseConfig = { databaseURL: "https://store-project-b023e-default-rtdb.
 firebase.initializeApp(firebaseConfig);
 const rdb = firebase.database();
 let sid = localStorage.getItem('m_taha_sid') || "demo"; 
+
 let storeData = { p: [], s: [], d: [] };
-
-rdb.ref('stores/'+sid).on('value', ss => { 
-    storeData = ss.val() || { p: [], s: [], d: [] }; 
-    render(); 
-});
-
-function toast(m) { let x=document.getElementById("toast"); x.innerText=m; x.className="show"; setTimeout(()=>{x.className=""},2500); }
+rdb.ref('stores/'+sid).on('value', ss => { storeData = ss.val() || { p: [], s: [], d: [] }; render(); });
 
 function tab(id, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -151,27 +115,23 @@ function tab(id, btn) {
     btn.classList.add('active');
 }
 
-function sync() { rdb.ref('stores/'+sid).set(storeData); }
-
 function saveStock() {
-    let n = document.getElementById('in-name').value, q = +document.getElementById('in-q').value;
-    if(!n || q <= 0) return alert("أكمل البيانات");
+    let n = document.getElementById('in-name').value, q = +document.getElementById('in-q').value, idx = document.getElementById('in-idx').value;
+    if(!n) return;
     if(!storeData.p) storeData.p = [];
-    storeData.p.push({name:n, buy:+document.getElementById('in-buy').value||0, sell:+document.getElementById('in-sell').value||0, qty:q, exp:document.getElementById('in-exp').value});
-    sync();
-    toast("تم حفظ الصنف 📦");
-    document.getElementById('in-name').value=""; document.getElementById('in-q').value="";
+    let obj = {name:n, sell:+document.getElementById('in-sell').value, qty:q};
+    if(idx === "") storeData.p.push(obj); else storeData.p[idx] = obj;
+    rdb.ref('stores/'+sid).set(storeData);
+    document.getElementById('in-name').value=""; document.getElementById('in-sell').value=""; document.getElementById('in-q').value="";
 }
 
 function doSale() {
     let i = document.getElementById('p-select').value, q = +document.getElementById('p-qty').value;
-    if(i==="" || q<=0) return alert("اختر الصنف والكمية");
-    if(storeData.p[i].qty < q) return alert("الكمية بالمخزن غير كافية!");
+    if(i==="" || q<=0 || storeData.p[i].qty < q) return alert("خطأ في البيانات أو الكمية");
     if(!storeData.s) storeData.s = [];
-    storeData.s.push({ n: storeData.p[i].name, q, t: q*storeData.p[i].sell, c: q*storeData.p[i].buy });
+    storeData.s.push({ n: storeData.p[i].name, q: q, t: q*storeData.p[i].sell, d: new Date().toLocaleTimeString('ar-EG') });
     storeData.p[i].qty -= q;
-    sync();
-    toast("تمت عملية البيع 🧾");
+    rdb.ref('stores/'+sid).set(storeData);
     document.getElementById('p-qty').value = "";
 }
 
@@ -179,55 +139,56 @@ function addDebt() {
     let n = document.getElementById('d-name').value, a = +document.getElementById('d-amt').value;
     if(!n || a <= 0) return;
     if(!storeData.d) storeData.d = [];
-    storeData.d.push({n, a, not:document.getElementById('d-notes').value});
-    sync();
-    toast("تم تسجيل الدين 📝");
+    storeData.d.push({n, a});
+    rdb.ref('stores/'+sid).set(storeData);
     document.getElementById('d-name').value=""; document.getElementById('d-amt').value="";
 }
+
+function logout() { if(confirm("خروج؟")) { localStorage.removeItem('m_taha_sid'); window.location.reload(); } }
 
 function render() {
     let ts=0, td=0;
     (storeData.s || []).forEach(x => ts += x.t);
     (storeData.d || []).forEach(x => td += x.a);
-    document.getElementById('s-total').innerText = ts.toLocaleString() + " ج";
-    document.getElementById('d-total').innerText = td.toLocaleString() + " ج";
+    document.getElementById('s-total').innerText = ts + " ج";
+    document.getElementById('d-total').innerText = td + " ج";
 
-    // إحصاء النواقص
-    let analysisBody = document.getElementById('analysis-body'); analysisBody.innerHTML = "";
-    (storeData.p || []).forEach(p => {
-        let st = "متوفر", cls = "row-success";
-        if(p.qty <= 0) { st = "منتهي"; cls = "row-danger"; }
-        else if(p.qty <= 5) { st = "نقص"; cls = "row-warning"; }
-        analysisBody.innerHTML += `<tr class="${cls}"><td>${p.name}</td><td>${p.qty}</td><td>${st}</td></tr>`;
-    });
-
-    // قائمة البيع المفلترة
-    let s = document.getElementById('p-select'); s.innerHTML = "";
-    let q = document.getElementById('search').value.toLowerCase();
-    (storeData.p || []).forEach((p, i) => {
-        if(p.name.toLowerCase().includes(q)) s.innerHTML += `<option value="${i}">${p.name} (المتوفر: ${p.qty})</option>`;
-    });
-
-    // جرد المخزن
-    let inv = document.getElementById('full-inventory'); inv.innerHTML = "<h4>الأصناف الحالية:</h4>";
-    (storeData.p || []).forEach((p, i) => {
-        inv.innerHTML += `<div class="card" style="padding:10px; display:flex; justify-content:space-between; align-items:center;">
-            <span><b>${p.name}</b> (${p.qty} قطعة)</span>
-            <button onclick="if(confirm('حذف؟')){storeData.p.splice(${i},1);sync();}" style="color:red; background:none; border:none;">حذف</button>
+    // رندر قائمة المبيعات المفصلة (الطلب الأساسي)
+    let sl = document.getElementById('sales-list-detailed'); sl.innerHTML = "";
+    if(!storeData.s || storeData.s.length === 0) sl.innerHTML = "<p>لا توجد مبيعات اليوم</p>";
+    (storeData.s || []).forEach((s, i) => {
+        sl.innerHTML += `<div class="sale-item">
+            <b>${s.n}</b> <br> الكمية: ${s.q} | الإجمالي: ${s.t} ج <br>
+            <small style="color:#888">${s.d}</small>
+            <span onclick="if(confirm('إلغاء البيع؟')){storeData.s.splice(${i},1);rdb.ref('stores/'+sid).set(storeData)}" style="float:left; color:red; cursor:pointer;">❌</span>
         </div>`;
     });
 
-    // قائمة الديون
-    let dList = document.getElementById('debts-list'); dList.innerHTML = "<h4>الديون الحالية:</h4>";
-    (storeData.d || []).forEach((d, i) => {
-        dList.innerHTML += `<div class="card" style="border-right:6px solid var(--purple)">
-            <b>${d.n}</b>: ${d.a} ج <br> <small>${d.not || ''}</small>
-            <button onclick="if(confirm('سداد؟')){storeData.d.splice(${i},1);sync();}" style="float:left; color:green; background:none; border:none; font-weight:bold;">تم السداد ✓</button>
+    // رندر النواقص
+    let ab = document.getElementById('analysis-body'); ab.innerHTML = "";
+    (storeData.p || []).forEach(p => {
+        let st = p.qty <= 0 ? "منتهي" : (p.qty <= 5 ? "ناقص" : "متوفر");
+        ab.innerHTML += `<tr><td>${p.name}</td><td>${p.qty}</td><td>${st}</td></tr>`;
+    });
+
+    // قائمة البيع
+    let sel = document.getElementById('p-select'); sel.innerHTML = "";
+    let q = document.getElementById('search').value.toLowerCase();
+    (storeData.p || []).forEach((p, i) => {
+        if(p.name.toLowerCase().includes(q)) sel.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`;
+    });
+
+    // قائمة المخزن
+    let inv = document.getElementById('full-inventory'); inv.innerHTML = "";
+    (storeData.p || []).forEach((p, i) => {
+        inv.innerHTML += `<div class="card" style="padding:10px; display:flex; justify-content:space-between;">
+            <span>${p.name} (${p.qty})</span>
+            <span style="color:var(--info)" onclick="document.getElementById('in-idx').value='${i}'; document.getElementById('in-name').value='${p.name}'; document.getElementById('in-sell').value='${p.sell}'; document.getElementById('in-q').value='${p.qty}'; window.scrollTo(0,0);">✏️</span>
         </div>`;
     });
 }
 
-function dailyReset() { if(confirm("هل أنت متأكد من تصفير مبيعات اليوم؟")) { storeData.s = []; sync(); toast("تم تصفير اليومية"); } }
+function dailyReset() { if(confirm("هل تريد مسح مبيعات اليوم؟")) { storeData.s = []; rdb.ref('stores/'+sid).set(storeData); } }
 </script>
 </body>
 </html>
