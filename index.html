@@ -11,10 +11,20 @@
         :root { --primary:#27ae60; --secondary:#2c3e50; --bg:#f4f7f6; --danger:#e74c3c; --warning:#f39c12; --info:#3498db; --purple:#8e44ad; }
         body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:100px; color: #333; }
         header { background: var(--secondary); color: white; padding: 15px 15px 45px 15px; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
+        
+        /* شريط الإعلان المضاف */
+        #news-bar { background: var(--warning); color: #000; padding: 5px 0; font-weight: bold; display: none; }
+        #owner-display { font-size: 12px; color: #adff2f; margin-top: 5px; font-weight: bold; }
+
         .logout-btn { position: absolute; left: 15px; top: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: -30px 15px 0 15px; }
         .stat-card { background: white; padding: 12px; border-radius: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .container { padding: 15px; max-width: 500px; margin: auto; }
+        
+        /* إصلاح النوافذ */
+        .page { display: none; } 
+        .page.active { display: block; }
+
         .card { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select, textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 10px; font-family: 'Cairo'; box-sizing: border-box; }
         .main-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
@@ -29,14 +39,16 @@
 </head>
 <body>
 
+<marquee id="news-bar"></marquee>
+
 <header>
     <button class="logout-btn" onclick="logout()">خروج 🚪</button>
     <h3>نظام M-TAHA</h3>
-</header>
+    <div id="owner-display"></div> </header>
 
 <div class="stat-grid">
-    <div class="stat-card"><span>مبيعات اليوم</span><b id="s-total">0</b></div>
-    <div class="stat-card"><span>إجمالي الديون</span><b id="d-total" style="color:var(--danger)">0</b></div>
+    <div class="stat-card"><span>مبيعات اليوم</span><br><b id="s-total">0</b></div>
+    <div class="stat-card"><span>إجمالي الديون</span><br><b id="d-total" style="color:var(--danger)">0</b></div>
 </div>
 
 <div class="container">
@@ -106,7 +118,22 @@ const rdb = firebase.database();
 let sid = localStorage.getItem('m_taha_sid') || "demo"; 
 
 let storeData = { p: [], s: [], d: [] };
-rdb.ref('stores/'+sid).on('value', ss => { storeData = ss.val() || { p: [], s: [], d: [] }; render(); });
+
+rdb.ref('stores/'+sid).on('value', ss => { 
+    storeData = ss.val() || { p: [], s: [], d: [] }; 
+    
+    // جلب إعدادات الأدمن (اسم المشترك والإعلان)
+    if(storeData.settings) {
+        document.getElementById('owner-display').innerText = "المشترك: " + (storeData.settings.ownerName || "غير محدد");
+        if(storeData.settings.announcement) {
+            document.getElementById('news-bar').innerText = storeData.settings.announcement;
+            document.getElementById('news-bar').style.display = "block";
+        } else {
+            document.getElementById('news-bar').style.display = "none";
+        }
+    }
+    render(); 
+});
 
 function tab(id, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -121,8 +148,8 @@ function saveStock() {
     if(!storeData.p) storeData.p = [];
     let obj = {name:n, sell:+document.getElementById('in-sell').value, qty:q};
     if(idx === "") storeData.p.push(obj); else storeData.p[idx] = obj;
-    rdb.ref('stores/'+sid).set(storeData);
-    document.getElementById('in-name').value=""; document.getElementById('in-sell').value=""; document.getElementById('in-q').value="";
+    rdb.ref('stores/'+sid+'/p').set(storeData.p); // تحديث المخزن فقط
+    document.getElementById('in-name').value=""; document.getElementById('in-sell').value=""; document.getElementById('in-q').value=""; document.getElementById('in-idx').value="";
 }
 
 function doSale() {
@@ -131,7 +158,7 @@ function doSale() {
     if(!storeData.s) storeData.s = [];
     storeData.s.push({ n: storeData.p[i].name, q: q, t: q*storeData.p[i].sell, d: new Date().toLocaleTimeString('ar-EG') });
     storeData.p[i].qty -= q;
-    rdb.ref('stores/'+sid).set(storeData);
+    rdb.ref('stores/'+sid).update({ s: storeData.s, p: storeData.p });
     document.getElementById('p-qty').value = "";
 }
 
@@ -140,7 +167,7 @@ function addDebt() {
     if(!n || a <= 0) return;
     if(!storeData.d) storeData.d = [];
     storeData.d.push({n, a});
-    rdb.ref('stores/'+sid).set(storeData);
+    rdb.ref('stores/'+sid+'/d').set(storeData.d);
     document.getElementById('d-name').value=""; document.getElementById('d-amt').value="";
 }
 
@@ -153,42 +180,43 @@ function render() {
     document.getElementById('s-total').innerText = ts + " ج";
     document.getElementById('d-total').innerText = td + " ج";
 
-    // رندر قائمة المبيعات المفصلة (الطلب الأساسي)
     let sl = document.getElementById('sales-list-detailed'); sl.innerHTML = "";
     if(!storeData.s || storeData.s.length === 0) sl.innerHTML = "<p>لا توجد مبيعات اليوم</p>";
     (storeData.s || []).forEach((s, i) => {
         sl.innerHTML += `<div class="sale-item">
             <b>${s.n}</b> <br> الكمية: ${s.q} | الإجمالي: ${s.t} ج <br>
             <small style="color:#888">${s.d}</small>
-            <span onclick="if(confirm('إلغاء البيع؟')){storeData.s.splice(${i},1);rdb.ref('stores/'+sid).set(storeData)}" style="float:left; color:red; cursor:pointer;">❌</span>
+            <span onclick="if(confirm('إلغاء البيع؟')){storeData.s.splice(${i},1);rdb.ref('stores/'+sid+'/s').set(storeData.s)}" style="float:left; color:red; cursor:pointer;">❌</span>
         </div>`;
     });
 
-    // رندر النواقص
     let ab = document.getElementById('analysis-body'); ab.innerHTML = "";
     (storeData.p || []).forEach(p => {
         let st = p.qty <= 0 ? "منتهي" : (p.qty <= 5 ? "ناقص" : "متوفر");
         ab.innerHTML += `<tr><td>${p.name}</td><td>${p.qty}</td><td>${st}</td></tr>`;
     });
 
-    // قائمة البيع
     let sel = document.getElementById('p-select'); sel.innerHTML = "";
     let q = document.getElementById('search').value.toLowerCase();
     (storeData.p || []).forEach((p, i) => {
         if(p.name.toLowerCase().includes(q)) sel.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`;
     });
 
-    // قائمة المخزن
     let inv = document.getElementById('full-inventory'); inv.innerHTML = "";
     (storeData.p || []).forEach((p, i) => {
         inv.innerHTML += `<div class="card" style="padding:10px; display:flex; justify-content:space-between;">
             <span>${p.name} (${p.qty})</span>
-            <span style="color:var(--info)" onclick="document.getElementById('in-idx').value='${i}'; document.getElementById('in-name').value='${p.name}'; document.getElementById('in-sell').value='${p.sell}'; document.getElementById('in-q').value='${p.qty}'; window.scrollTo(0,0);">✏️</span>
+            <span style="color:var(--info)" onclick="editStock(${i})">✏️</span>
         </div>`;
     });
 }
-
-function dailyReset() { if(confirm("هل تريد مسح مبيعات اليوم؟")) { storeData.s = []; rdb.ref('stores/'+sid).set(storeData); } }
+function editStock(i) {
+    let p = storeData.p[i];
+    document.getElementById('in-idx').value=i; document.getElementById('in-name').value=p.name;
+    document.getElementById('in-sell').value=p.sell; document.getElementById('in-q').value=p.qty;
+    tab('stock', document.querySelectorAll('.nav-item')[3]);
+}
+function dailyReset() { if(confirm("هل تريد مسح مبيعات اليوم؟")) { rdb.ref('stores/'+sid+'/s').remove(); } }
 </script>
 </body>
 </html>
