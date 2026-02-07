@@ -9,121 +9,96 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --p-color: #10b981; --s-color: #1e293b; --danger: #ef4444; }
-        body { font-family: 'Cairo', sans-serif; background: #f8fafc; color: var(--s-color); overflow-x: hidden; }
-        .app-card { border: none; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: 0.3s; }
+        :root { --p-color: #10b981; --s-color: #1e293b; }
+        body { font-family: 'Cairo', sans-serif; background: #f8fafc; color: var(--s-color); }
+        .app-card { border: none; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .nav-fixed { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #e2e8f0; z-index: 1000; padding: 10px 0; }
         .nav-item { flex: 1; text-align: center; border: none; background: none; color: #94a3b8; font-weight: 700; font-size: 13px; }
         .nav-item.active { color: var(--p-color); }
-        .page { display: none; padding: 20px; animation: slideUp 0.4s ease; }
+        .page { display: none; padding: 20px; }
         .page.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .ticker { background: #fbbf24; color: #000; padding: 10px; font-weight: 900; position: sticky; top: 0; z-index: 1100; display: none; font-size: 14px; text-align: center; }
+        .ticker { background: #fbbf24; color: #000; padding: 10px; font-weight: 900; position: sticky; top: 0; z-index: 1100; display: none; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="announcement" class="ticker shadow-sm"></div>
+<div id="announcement" class="ticker"></div>
 
 <div id="auth-screen" class="vh-100 vw-100 bg-white d-flex align-items-center justify-content-center position-fixed" style="z-index: 2000;">
     <div class="p-4 w-100" style="max-width: 400px;">
         <div class="text-center mb-4">
-            <h1 class="fw-black text-success" style="font-size: 2.5rem;">M-TAHA</h1>
-            <p class="text-muted">نظام إدارة البقالة الذكي v3.0</p>
+            <h1 class="fw-black text-success">M-TAHA</h1>
+            <p class="text-muted">نظام إدارة البقالة الذكي</p>
         </div>
-        <div class="card app-card p-4">
-            <label class="form-label fw-bold">كود التفعيل</label>
-            <input type="password" id="auth-input" class="form-control form-control-lg mb-3 border-2" placeholder="••••">
-            <button class="btn btn-success btn-lg w-100 fw-bold shadow" onclick="handleAuth()">دخول آمن</button>
-            <div class="mt-4 text-center small border-top pt-3">
-                للتفعيل وطلب نسخة: <br> <b class="text-dark">0901946410</b>
-            </div>
+        <div class="card app-card p-4 text-center">
+            <label class="form-label fw-bold">كود الدخول</label>
+            <input type="text" id="auth-input" inputmode="numeric" class="form-control form-control-lg mb-3 border-2 text-center" placeholder="أدخل كودك الخاص" style="-webkit-text-security: disc;">
+            <button class="btn btn-success btn-lg w-100 fw-bold" onclick="handleAuth()">دخول آمن</button>
         </div>
     </div>
 </div>
 
 <div id="app-ui" style="display: none;">
-    <header class="bg-white p-3 shadow-sm d-flex justify-content-between align-items-center">
-        <b class="text-success h5 m-0" id="ui-store-name">...</b>
-        <button class="btn btn-sm btn-outline-danger fw-bold" onclick="logout()">خروج</button>
+    <header class="bg-white p-3 shadow-sm d-flex justify-content-between">
+        <b class="text-success" id="ui-store-name">...</b>
+        <button class="btn btn-sm btn-outline-danger" onclick="logout()">خروج</button>
     </header>
 
     <div class="container-fluid mb-5 pb-5">
         <div id="p-dashboard" class="page active">
             <div class="row g-3">
-                <div class="col-6">
-                    <div class="card app-card p-3 bg-white border-start border-success border-4">
-                        <small class="text-muted">صافي الربح</small>
-                        <h3 class="fw-bold mb-0" id="res-profit">0</h3>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card app-card p-3 bg-white border-start border-danger border-4">
-                        <small class="text-muted">إجمالي الديون</small>
-                        <h3 class="fw-bold mb-0 text-danger" id="res-debt">0</h3>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card app-card p-4">
-                        <h6 class="fw-bold text-muted border-bottom pb-2 mb-3">الجرد المالي</h6>
-                        <div class="d-flex justify-content-between mb-2"><span>سيولة المبيعات (كاش):</span><b id="res-cash">0</b></div>
-                        <div class="d-flex justify-content-between mb-2"><span>قيمة بضاعة المخزن:</span><b id="res-stock">0</b></div>
-                        <div class="d-flex justify-content-between"><span>إجمالي المصروفات:</span><b class="text-danger" id="res-exp">0</b></div>
-                    </div>
-                </div>
+                <div class="col-6"><div class="card app-card p-3"><span>صافي الربح</span><h3 id="res-profit">0</h3></div></div>
+                <div class="col-6"><div class="card app-card p-3"><span class="text-danger">الديون</span><h3 id="res-debt">0</h3></div></div>
             </div>
-            <button class="btn btn-dark w-100 mt-4 py-3 fw-bold" onclick="window.print()">🖨️ طباعة تقرير شامل</button>
-            <button class="btn btn-outline-danger w-100 mt-2 btn-sm" onclick="dailyReset()">تصفير مبيعات اليوم</button>
+            <button class="btn btn-dark w-100 mt-4 py-3" onclick="window.print()">🖨️ طباعة التقرير</button>
         </div>
 
         <div id="p-sales" class="page">
             <div class="card app-card p-3">
-                <h5 class="fw-bold mb-3">🧾 فاتورة بيع</h5>
-                <input type="text" id="p-search" class="form-control mb-2 p-3" placeholder="ابحث عن صنف..." onkeyup="searchPr()">
-                <select id="p-list" class="form-select mb-3" size="5"></select>
-                <div class="row g-2 mb-3">
-                    <div class="col-6"><label class="small">الكمية</label><input type="number" id="s-qty" class="form-control"></div>
-                    <div class="col-6"><label class="small">السعر</label><input type="number" id="s-price" class="form-control"></div>
-                </div>
-                <div class="bg-light p-3 rounded-3 mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="is-debt">
-                        <label class="form-check-label fw-bold">بيع آجل (دين)</label>
-                    </div>
-                    <input type="text" id="cust-name" class="form-control mt-2" placeholder="اسم العميل.." style="display:none">
-                </div>
-                <button class="btn btn-success w-100 py-3 fw-bold" onclick="saveSale()">تأكيد العملية ✅</button>
+                <h5>🧾 مبيعات</h5>
+                <input type="text" id="p-search" class="form-control mb-2" placeholder="بحث..." onkeyup="searchPr()">
+                <select id="p-list" class="form-select mb-3" size="4"></select>
+                <input type="number" id="s-qty" class="form-control mb-2" placeholder="الكمية">
+                <input type="number" id="s-price" class="form-control mb-3" placeholder="السعر">
+                <button class="btn btn-success w-100 py-3" onclick="saveSale()">تأكيد العملية ✅</button>
             </div>
         </div>
 
         <div id="p-stock" class="page">
             <div class="card app-card p-3 mb-3">
-                <h5 class="fw-bold mb-3">📦 بضاعة جديدة</h5>
+                <h5>📦 إضافة بضاعة</h5>
                 <input id="in-name" class="form-control mb-2" placeholder="اسم الصنف">
                 <div class="row g-2 mb-3">
-                    <div class="col-4"><input id="in-buy" type="number" class="form-control" placeholder="شراء"></div>
-                    <div class="col-4"><input id="in-sell" type="number" class="form-control" placeholder="بيع"></div>
-                    <div class="col-4"><input id="in-qty" type="number" class="form-control" placeholder="كمية"></div>
+                    <div class="col-6"><input id="in-buy" type="number" class="form-control" placeholder="شراء"></div>
+                    <div class="col-6"><input id="in-sell" type="number" class="form-control" placeholder="بيع"></div>
                 </div>
-                <button class="btn btn-primary w-100 fw-bold" onclick="addPr()">إضافة للمخزن</button>
+                <button class="btn btn-primary w-100" onclick="addPr()">حفظ في المخزن</button>
             </div>
             <div id="stock-render"></div>
         </div>
     </div>
 </div>
 
-<nav class="nav-fixed shadow">
+<nav class="nav-fixed">
     <button class="nav-item active" onclick="tab('dashboard', this)">📊 حسابات</button>
     <button class="nav-item" onclick="tab('sales', this)">🧾 مبيعات</button>
     <button class="nav-item" onclick="tab('stock', this)">📦 مخزن</button>
 </nav>
 
 <script>
-// Firebase Config
-const firebaseConfig = { databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com" };
+// الإعدادات من صورتك مباشرة
+const firebaseConfig = {
+  apiKey: "AIzaSyAYJwvrBLc_svZ2IcWBzrBbK_ZpUqX0G8M",
+  authDomain: "store-project-b023e.firebaseapp.com",
+  databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
+  projectId: "store-project-b023e",
+  storageBucket: "store-project-b023e.appspot.com",
+  messagingSenderId: "561530737705",
+  appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+};
+
 firebase.initializeApp(firebaseConfig);
 const rdb = firebase.database();
-rdb.ref().keepSynced(true); // العمل Offline
 
 let sid = localStorage.getItem('m_taha_session');
 let data = { p: [], s: [] };
@@ -163,16 +138,11 @@ function tab(t, btn) {
     btn.classList.add('active');
 }
 
-document.getElementById('is-debt').onchange = function() {
-    document.getElementById('cust-name').style.display = this.checked ? 'block' : 'none';
-};
-
 function searchPr() {
     const q = document.getElementById('p-search').value.toLowerCase();
     const list = document.getElementById('p-list'); list.innerHTML = "";
     (data.p || []).forEach((p, i) => {
-        if(p.name.toLowerCase().includes(q))
-            list.innerHTML += `<option value="${i}">${p.name} (المتوفر: ${p.qty})</option>`;
+        if(p.name.toLowerCase().includes(q)) list.innerHTML += `<option value="${i}">${p.name}</option>`;
     });
 }
 
@@ -180,52 +150,38 @@ function saveSale() {
     const idx = document.getElementById('p-list').value;
     const qty = +document.getElementById('s-qty').value;
     const pr = +document.getElementById('s-price').value;
-    const isD = document.getElementById('is-debt').checked;
-    if(idx==="" || qty <= 0 || data.p[idx].qty < qty) return alert("خطأ في البيانات أو الكمية!");
-
+    if(idx==="" || qty <= 0) return alert("أكمل البيانات");
     if(!data.s) data.s = [];
-    data.s.push({ n: data.p[idx].name, q: qty, t: qty*pr, c: qty*data.p[idx].buy, d: isD });
-    data.p[idx].qty -= qty;
+    data.s.push({ n: data.p[idx].name, q: qty, t: qty*pr, c: qty*data.p[idx].buy });
     sync();
-    alert("تم الحفظ ✅");
+    alert("تم البيع ✅");
 }
 
 function addPr() {
-    const n = document.getElementById('in-name').value, b = +document.getElementById('in-buy').value, s = +document.getElementById('in-sell').value, q = +document.getElementById('in-qty').value;
-    if(!n || b<=0) return alert("أكمل البيانات!");
+    const n = document.getElementById('in-name').value, b = +document.getElementById('in-buy').value, s = +document.getElementById('in-sell').value;
+    if(!n || b<=0) return alert("أكمل البيانات");
     if(!data.p) data.p = [];
-    data.p.push({name:n, buy:b, sell:s, qty:q});
+    data.p.push({name:n, buy:b, sell:s, qty:0});
     sync();
 }
 
 function sync() { rdb.ref('stores_data/'+sid).set(data); }
 
 function render() {
-    let profit = 0, debt = 0, cash = 0, stock = 0;
-    (data.s || []).forEach(x => {
-        if(!x.d) { profit += (x.t - x.c); cash += x.t; }
-        else { debt += x.t; }
-    });
-    (data.p || []).forEach(x => stock += (x.qty * x.buy));
-
+    let profit = 0;
+    (data.s || []).forEach(x => { profit += (x.t - x.c); });
     document.getElementById('res-profit').innerText = profit.toLocaleString() + " ج";
-    document.getElementById('res-debt').innerText = debt.toLocaleString() + " ج";
-    document.getElementById('res-cash').innerText = cash.toLocaleString() + " ج";
-    document.getElementById('res-stock').innerText = stock.toLocaleString() + " ج";
-
     const inv = document.getElementById('stock-render'); inv.innerHTML = "";
     (data.p || []).forEach((p, i) => {
         inv.innerHTML += `<div class="card app-card p-3 mb-2 d-flex flex-row justify-content-between">
-            <b>${p.name} <small class="text-muted">(${p.qty})</small></b>
-            <button class="btn btn-sm text-danger fw-bold" onclick="delPr(${i})">حذف</button>
+            <b>${p.name}</b>
+            <button class="btn btn-sm text-danger" onclick="delPr(${i})">حذف</button>
         </div>`;
     });
-    searchPr();
 }
 
-function delPr(i) { if(confirm("حذف الصنف؟")) { data.p.splice(i,1); sync(); } }
+function delPr(i) { if(confirm("حذف؟")) { data.p.splice(i,1); sync(); } }
 function logout() { localStorage.clear(); location.reload(); }
-function dailyReset() { if(confirm("هل تريد تصفير مبيعات اليوم؟")) { data.s = []; sync(); } }
 </script>
 </body>
 </html>
