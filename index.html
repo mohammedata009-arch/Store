@@ -11,8 +11,8 @@
         :root { --primary:#27ae60; --secondary:#2c3e50; --bg:#f4f7f6; --danger:#e74c3c; --warning:#f39c12; }
         body { font-family:'Cairo',sans-serif; background:var(--bg); margin:0; padding-bottom:100px; overflow-x: hidden; }
         
-        /* إخفاء الصفحات غير النشطة - هذا هو حل مشكلة "الطولي" */
-        .page { display: none; transition: 0.3s; }
+        /* إخفاء الصفحات غير النشطة */
+        .page { display: none; }
         .page.active { display: block; }
 
         header { background: var(--secondary); color: white; padding: 20px 0 55px 0; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
@@ -25,17 +25,17 @@
         .container { padding: 15px; max-width: 500px; margin: auto; }
         .card { background: white; border-radius: 18px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        input, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; font-family: 'Cairo'; box-sizing: border-box; font-size: 15px; }
+        input, select { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; font-family: 'Cairo'; box-sizing: border-box; font-size: 15px; background: #fff; }
 
         .main-btn { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
 
         .logout-btn { position: absolute; left: 15px; top: 15px; background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 12px; border-radius: 10px; font-size: 11px; }
 
         .bottom-nav { position:fixed; bottom:0; width:100%; background:white; display:flex; justify-content:space-around; padding:12px 0; box-shadow:0 -5px 20px rgba(0,0,0,0.08); z-index: 1000; }
-        .nav-item { border:none; background:none; color:#bdc3c7; font-size: 11px; cursor:pointer; font-family:'Cairo'; }
+        .nav-item { border:none; background:none; color:#bdc3c7; font-size: 11px; cursor:pointer; font-family:'Cairo'; text-align: center; }
         .nav-item.active { color:var(--primary); font-weight:900; }
 
-        .inventory-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .inventory-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -67,39 +67,39 @@
                 <p>الربح الصافي: <b id="final-profit" style="color:var(--primary)">0</b></p>
                 <p>قيمة المخزن: <b id="stock-val">0</b></p>
             </div>
-            <button class="main-btn" style="background:var(--warning)" onclick="window.print()">🖨️ طباعة</button>
+            <button class="main-btn" style="background:var(--warning)" onclick="window.print()">🖨️ طباعة تقرير</button>
             <button class="main-btn" style="background:var(--danger)" onclick="dailyReset()">🧹 تصفير اليومية</button>
         </div>
 
         <div id="sell" class="page">
             <div class="card">
                 <h3>🧾 عملية بيع</h3>
-                <input type="text" id="search" placeholder="بحث..." onkeyup="search()">
+                <input type="text" id="search" placeholder="بحث عن منتج..." onkeyup="search()">
                 <select id="p-select" size="4" onchange="if(this.value!=='') document.getElementById('p-price-edit').value = storeData.p[this.value].sell"></select>
                 <input type="number" id="p-qty" placeholder="الكمية">
                 <input type="number" id="p-price-edit" placeholder="السعر">
-                <button class="main-btn" onclick="doSale()">تأكيد ✅</button>
+                <button class="main-btn" onclick="doSale()">تأكيد العملية ✅</button>
             </div>
         </div>
 
         <div id="stock" class="page">
             <div class="card">
                 <h3>📦 المخزن</h3>
-                <input id="in-name" placeholder="الاسم">
+                <input id="in-name" placeholder="اسم الصنف">
                 <input id="in-buy" type="number" placeholder="سعر الشراء">
                 <input id="in-sell" type="number" placeholder="سعر البيع">
                 <input id="in-q" type="number" placeholder="الكمية">
-                <button class="main-btn" onclick="saveStock()">حفظ</button>
+                <button class="main-btn" onclick="saveStock()">حفظ في المخزن</button>
             </div>
             <div id="full-inventory"></div>
         </div>
 
         <div id="expenses" class="page">
             <div class="card">
-                <h3>💸 مصروفات</h3>
-                <input id="exp-name" placeholder="البيان">
+                <h3>💸 تسجيل مصروفات</h3>
+                <input id="exp-name" placeholder="بيان الصرف">
                 <input id="exp-amt" type="number" placeholder="المبلغ">
-                <button class="main-btn" style="background:var(--danger)" onclick="addExp()">إضافة</button>
+                <button class="main-btn" style="background:var(--danger)" onclick="addExp()">تسجيل المصرف</button>
             </div>
             <div id="exp-list"></div>
         </div>
@@ -126,7 +126,7 @@ function checkAuth() {
         if(s.exists() && s.val().status === 'active') {
             localStorage.setItem('m_taha_sid', inputId);
             location.reload();
-        } else { alert("خطأ في المعرف"); }
+        } else { alert("خطأ في المعرف أو غير مفعل"); }
     });
 }
 
@@ -156,13 +156,18 @@ function search() {
     (storeData.p || []).forEach((p, i) => { if(p.name.toLowerCase().includes(q)) s.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`; });
 }
 
+// ميزة تفريغ الحقول مدمجة هنا
 function doSale() {
     let i = document.getElementById('p-select').value, q = +document.getElementById('p-qty').value, pr = +document.getElementById('p-price-edit').value;
-    if(i==="" || q<=0) return alert("بيانات ناقصة");
+    if(i==="" || q<=0) return alert("بيانات البيع غير مكتملة");
     if(!storeData.s) storeData.s = [];
     storeData.s.push({ n: storeData.p[i].name, q, t: q*pr, c: q*storeData.p[i].buy });
     storeData.p[i].qty -= q;
     sync();
+    // تفريغ الحقول
+    document.getElementById('p-qty').value = "";
+    document.getElementById('p-price-edit').value = "";
+    document.getElementById('search').value = "";
 }
 
 function saveStock() {
@@ -171,6 +176,11 @@ function saveStock() {
     if(!storeData.p) storeData.p = [];
     storeData.p.push({name:n, buy:b, sell:s, qty:q});
     sync();
+    // تفريغ الحقول
+    document.getElementById('in-name').value = "";
+    document.getElementById('in-buy').value = "";
+    document.getElementById('in-sell').value = "";
+    document.getElementById('in-q').value = "";
 }
 
 function addExp() {
@@ -179,9 +189,12 @@ function addExp() {
     if(!storeData.e) storeData.e = [];
     storeData.e.push({n, a});
     sync();
+    // تفريغ الحقول
+    document.getElementById('exp-name').value = "";
+    document.getElementById('exp-amt').value = "";
 }
 
-function dailyReset() { if(confirm("تصفير اليوم؟")) { storeData.s = []; storeData.e = []; sync(); } }
+function dailyReset() { if(confirm("هل تريد تصفير مبيعات ومصاريف اليوم؟")) { storeData.s = []; storeData.e = []; sync(); } }
 function sync() { rdb.ref('stores/'+sid).set(storeData); }
 
 function render() {
@@ -194,12 +207,12 @@ function render() {
     document.getElementById('e-total').innerText = te.toLocaleString();
     document.getElementById('final-profit').innerText = ((ts - tc) - te).toLocaleString();
     document.getElementById('stock-val').innerText = sv.toLocaleString();
-    let invDiv = document.getElementById('full-inventory'); invDiv.innerHTML = "<h4>الجرد:</h4>";
+    let invDiv = document.getElementById('full-inventory'); invDiv.innerHTML = "<h4>قائمة الجرد:</h4>";
     (storeData.p || []).forEach((p, i) => {
-        invDiv.innerHTML += `<div class="inventory-item"><span>${p.name} (${p.qty})</span> <button onclick="storeData.p.splice(${i},1);sync()" style="color:red;border:none;background:none;">حذف</button></div>`;
+        invDiv.innerHTML += `<div class="inventory-item"><span>${p.name} (كمية: ${p.qty})</span> <button onclick="if(confirm('حذف؟')){storeData.p.splice(${i},1);sync()}" style="color:red;border:none;background:none;">حذف</button></div>`;
     });
-    let eDiv = document.getElementById('exp-list'); eDiv.innerHTML = "<h4>المصاريف:</h4>";
-    (storeData.e || []).forEach(x => { eDiv.innerHTML += `<div>• ${x.n}: ${x.a}</div>`; });
+    let eDiv = document.getElementById('exp-list'); eDiv.innerHTML = "<h4>سجل المصاريف:</h4>";
+    (storeData.e || []).forEach(x => { eDiv.innerHTML += `<div style="padding:5px 0; border-bottom:1px dashed #eee;">• ${x.n}: ${x.a}</div>`; });
 }
 </script>
 </body>
