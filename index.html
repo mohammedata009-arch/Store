@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>M-TAHA ERP | نظام إدارة البقالة الذكي</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,29 +12,59 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --main-color: #059669; --bg-soft: #f8fafc; --accent: #10b981; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-soft); color: #1e293b; overflow-x: hidden; }
+        :root { 
+            --main-color: #059669; 
+            --bg-soft: #f8fafc; 
+            --accent: #10b981; 
+            /* تعديل لهواتف هونر: إضافة حماية للحواف السفلية لمنع تداخل الإيماءات */
+            --safe-bottom: env(safe-area-inset-bottom, 15px);
+        }
         
-        /* شاشة الدخول */
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-soft); color: #1e293b; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
         #auth-screen { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); z-index: 9999; }
         
-        /* واجهة التطبيق */
         .app-header { background: white; border-bottom: 1px solid #e2e8f0; sticky: top; z-index: 1000; }
-        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #e2e8f0; display: flex; z-index: 1000; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-link-custom { flex: 1; text-align: center; color: #64748b; text-decoration: none; font-size: 12px; font-weight: 700; transition: 0.3s; cursor: pointer; }
+        
+        /* تعديل شريط التنقل السفلي ليتناسب مع إيماءات الهواتف الحديثة */
+        .nav-bottom { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: white; 
+            border-top: 1px solid #e2e8f0; 
+            display: flex; 
+            z-index: 1000; 
+            padding-top: 10px;
+            padding-bottom: var(--safe-bottom);
+            height: calc(65px + var(--safe-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
+        }
+
+        .nav-link-custom { 
+            flex: 1; 
+            text-align: center; 
+            color: #64748b; 
+            text-decoration: none; 
+            font-size: 12px; 
+            font-weight: 700; 
+            transition: 0.3s; 
+            cursor: pointer;
+            touch-action: manipulation; /* تسريع الاستجابة للمس */
+        }
         .nav-link-custom.active { color: var(--main-color); }
         
-        /* البطاقات والحاويات */
         .card-custom { background: white; border: none; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
         .page { display: none; padding: 20px; animation: slideUp 0.4s ease; }
         .page.active { display: block; }
         
-        /* تنبيهات النواقص */
+        /* ضمان عدم اختفاء المحتوى خلف الشريط السفلي */
+        .container-fluid { padding-bottom: 100px; }
+
         .alert-low { background: #fff1f2; border-right: 5px solid #e11d48; color: #9f1239; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-weight: 600; }
         
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* تنسيق الطباعة الرسمي */
         @media print {
             .no-print, .nav-bottom, .btn, .app-header { display: none !important; }
             .page { display: block !important; padding: 0 !important; }
@@ -65,7 +95,7 @@
         <button class="btn btn-sm btn-outline-danger fw-bold" onclick="logout()">خروج</button>
     </header>
 
-    <div class="container-fluid mb-5">
+    <div class="container-fluid">
         
         <div id="p-reports" class="page active">
             <div class="print-only">
@@ -155,7 +185,6 @@
 </div>
 
 <script>
-// --- 1. إعدادات Firebase (استبدلها ببياناتك إذا كانت مختلفة) ---
 const firebaseConfig = {
     apiKey: "AIzaSyAYJwvrBLc_svZ2IcWBzrBbK_ZpUqX0G8M",
     databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
@@ -167,7 +196,6 @@ const rdb = firebase.database();
 
 let sid = localStorage.getItem('m_taha_sid'), data = { p: [], s: [] }, editIdx = -1;
 
-// --- 2. نظام الدخول وحفظ الجلسة ---
 function login() {
     const code = document.getElementById('auth-code').value.trim();
     if(!code) return;
@@ -198,15 +226,15 @@ function initApp(name) {
 
 function logout() { localStorage.clear(); location.reload(); }
 
-// --- 3. التنقل بين الصفحات ---
+// تحسين دالة التبديل لتجنب تعليق اللمس في أندرويد 14
 function showPage(pId, el) {
+    window.scrollTo(0, 0);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-link-custom').forEach(n => n.classList.remove('active'));
     document.getElementById('p-'+pId).classList.add('active');
     el.classList.add('active');
 }
 
-// --- 4. منطق البيع (POS) ---
 function autoPrice() {
     const i = document.getElementById('pos-select').value;
     if(i !== "") document.getElementById('pos-price').value = data.p[i].sell;
@@ -229,7 +257,7 @@ function submitSale() {
     const today = new Date().toLocaleDateString('ar-EG');
     if(!data.s) data.s = [];
     data.s.push({ n: data.p[i].name, q: q, t: q*pr, c: q*data.p[i].buy, d: today });
-    data.p[i].qty -= q; // خصم تلقائي من المخزن
+    data.p[i].qty -= q; 
     
     rdb.ref('stores_data/'+sid).set(data).then(() => {
         alert("تمت العملية ✅");
@@ -238,7 +266,6 @@ function submitSale() {
     });
 }
 
-// --- 5. إدارة المخزن ---
 function saveToStock() {
     const n = document.getElementById('st-name').value, q = +document.getElementById('st-qty').value, b = +document.getElementById('st-buy').value, s = +document.getElementById('st-sell').value;
     if(!n) return alert("أدخل اسم الصنف");
@@ -260,7 +287,6 @@ function saveToStock() {
     });
 }
 
-// --- 6. العرض وتحديث الواجهة (Render) ---
 function renderData() {
     const today = new Date().toLocaleDateString('ar-EG');
     document.getElementById('p-date').innerText = "تقرير يوم: " + today;
@@ -270,7 +296,6 @@ function renderData() {
     const lowCont = document.getElementById('low-stock-container'); lowCont.innerHTML = "";
     const stCont = document.getElementById('stock-list-container'); stCont.innerHTML = "";
 
-    // معالجة المبيعات
     (data.s || []).forEach((x, idx) => {
         if(x.d === today) {
             pft += (x.t - x.c); ttlSales += x.t;
@@ -278,7 +303,6 @@ function renderData() {
         }
     });
 
-    // معالجة المخزن
     (data.p || []).forEach((p, i) => {
         stValue += (p.buy * p.qty);
         stCont.innerHTML += `<div class="card-custom d-flex justify-content-between align-items-center mb-2 p-3">
@@ -295,10 +319,9 @@ function renderData() {
     document.getElementById('stat-profit').innerText = pft.toLocaleString();
     document.getElementById('stat-total-sales').innerText = ttlSales.toLocaleString() + " ج";
     document.getElementById('stat-stock-val').innerText = stValue.toLocaleString();
-    filterPOS(); // لتحديث قائمة البيع
+    filterPOS(); 
 }
 
-// --- 7. الحذف والتعديل ---
 function editStock(i) {
     const p = data.p[i];
     document.getElementById('st-name').value = p.name;
@@ -320,7 +343,7 @@ function delSale(i) { if(confirm("إلغاء عملية البيع وإرجاع 
 }}
 
 function clearDaySales() {
-    if(confirm("يا محمد طه، هل أنت متأكد من تصفير مبيعات اليوم؟ (المخزن لن يتأثر)")) {
+    if(confirm("يا محمد طه، هل أنت متأكد من تصفير مبيعات اليوم؟")) {
         const pass = prompt("أدخل كود المتجر للتأكيد:");
         if(pass === sid) { data.s = []; rdb.ref('stores_data/'+sid).set(data); }
     }
