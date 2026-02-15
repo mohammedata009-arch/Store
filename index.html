@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M-TAHA ERP | النظام المتكامل</title>
+    <title>M-TAHA ERP | التصفح السريع</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -13,57 +13,50 @@
 
     <style>
         :root { --main-color: #059669; --bg-soft: #f8fafc; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-soft); margin: 0; overflow: hidden; touch-action: none; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg-soft); overflow: hidden; height: 100vh; margin: 0; }
         
         /* شاشة الدخول */
-        #auth-screen { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); z-index: 9999; position: fixed; inset: 0; }
+        #auth-screen { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); z-index: 10000; position: fixed; inset: 0; }
         
-        /* واجهة التطبيق الهيكلية */
-        .app-header { background: white; border-bottom: 1px solid #e2e8f0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; position: relative; z-index: 1001; }
-        
-        .viewport { width: 100vw; height: calc(100vh - 130px); position: relative; overflow: hidden; }
-
-        .pages-row {
+        /* حاوية التمرير الأفقي الذكي */
+        .pages-wrapper {
             display: flex;
-            height: 100%;
-            width: 300%; 
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            will-change: transform;
-        }
-
-        .page-item {
-            width: 100vw;
-            flex: 0 0 100vw;
-            padding: 15px;
-            overflow-y: auto;
-            box-sizing: border-box;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            height: calc(100vh - 130px); /* مساحة للهيدر والفوتر */
             -webkit-overflow-scrolling: touch;
         }
+        .pages-wrapper::-webkit-scrollbar { display: none; } /* إخفاء شريط التمرير */
 
-        .card-custom { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; height: 70px; z-index: 1000; }
-        .nav-link-custom { flex: 1; text-align: center; display:flex; flex-direction:column; align-items:center; justify-content:center; color: #94a3b8; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .nav-link-custom.active { color: var(--main-color); border-top: 3px solid var(--main-color); }
-
-        .alert-low { background: #fff1f2; border-right: 5px solid #e11d48; color: #9f1239; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
-
-        @media print {
-            .no-print, .nav-bottom, .app-header { display: none !important; }
-            body { overflow: visible !important; }
-            .viewport { height: auto !important; overflow: visible !important; }
-            .pages-row { transform: none !important; display: block !important; width: 100% !important; }
-            .page-item { display: none; }
-            .page-item:first-child { display: block; }
+        .page {
+            min-width: 100%;
+            width: 100%;
+            scroll-snap-align: start;
+            padding: 15px;
+            overflow-y: auto;
         }
+
+        /* الهيدر والفوتر */
+        .app-header { height: 60px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+        .nav-bottom { height: 70px; background: white; border-top: 1px solid #e2e8f0; display: flex; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-link-custom { flex: 1; text-align: center; color: #94a3b8; text-decoration: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .nav-link-custom.active { color: var(--main-color); transform: scale(1.1); }
+        .nav-link-custom i { font-size: 20px; display: block; margin-bottom: 2px; }
+
+        .card-custom { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; margin-bottom: 15px; border: 1px solid #f1f5f9; }
+        .alert-low { background: #fff1f2; border-right: 4px solid #e11d48; color: #9f1239; padding: 8px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+
+        @media print { .no-print { display: none !important; } .pages-wrapper { overflow: visible; display: block; height: auto; } }
     </style>
 </head>
 <body>
 
 <div id="auth-screen" class="d-flex align-items-center justify-content-center text-white">
     <div class="text-center p-4 w-100" style="max-width: 400px;">
-        <h1 class="fw-900 mb-3">M-TAHA ERP</h1>
-        <div class="bg-white p-4 rounded-4 shadow-lg">
+        <h1 class="fw-900 mb-2">M-TAHA ERP</h1>
+        <p class="mb-4 opacity-75">نظام إدارة البقالة المتكامل</p>
+        <div class="bg-white p-4 rounded-4 shadow-lg text-dark">
             <input type="text" id="auth-code" class="form-control form-control-lg mb-3 text-center" placeholder="كود التفعيل">
             <button class="btn btn-success btn-lg w-100 fw-bold" onclick="login()">دخول</button>
             <p id="login-err" class="text-danger mt-2 small d-none">⚠️ الكود غير صحيح!</p>
@@ -73,79 +66,68 @@
 
 <div id="main-app" style="display: none;">
     <header class="app-header no-print">
-        <span class="fw-bold text-success" id="store-title">جاري التحميل...</span>
-        <button class="btn btn-sm btn-outline-danger" onclick="logout()">خروج</button>
+        <span class="fw-bold text-success fs-6" id="store-title">جاري التحميل...</span>
+        <button class="btn btn-sm btn-outline-danger py-1" onclick="logout()">خروج</button>
     </header>
 
-    <div class="viewport" id="touch-area">
-        <div class="pages-row" id="main-slider">
-            
-            <div class="page-item" id="p-reports">
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <div class="card-custom text-center border-bottom border-success border-4">
-                            <small class="text-muted">أرباح اليوم</small>
-                            <h4 id="stat-profit" class="fw-bold text-success m-0">0</h4>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card-custom text-center border-bottom border-primary border-4">
-                            <small class="text-muted">المخزن</small>
-                            <h4 id="stat-stock-val" class="fw-bold text-primary m-0">0</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-custom">
-                    <h6 class="fw-bold mb-2">🚨 نواقص</h6>
-                    <div id="low-stock-container"></div>
-                </div>
-                <div class="card-custom">
-                    <h6 class="fw-bold mb-2">📊 مبيعات اليوم</h6>
-                    <table class="table table-sm small"><tbody id="sales-table-body"></tbody></table>
-                    <div class="text-start fw-bold border-top pt-2">إجمالي: <span id="stat-total-sales">0</span></div>
-                </div>
-                <button class="btn btn-dark w-100 py-3 no-print" onclick="window.print()">🖨️ طباعة التقرير</button>
+    <div class="pages-wrapper" id="pages-container" onscroll="syncNav()">
+        
+        <div id="p-reports" class="page">
+            <div class="row g-2 mb-3">
+                <div class="col-6"><div class="card-custom text-center py-2"><small class="text-muted d-block">أرباح اليوم</small><b id="stat-profit" class="text-success h4">0</b></div></div>
+                <div class="col-6"><div class="card-custom text-center py-2"><small class="text-muted d-block">المخزن</small><b id="stat-stock-val" class="text-primary h4">0</b></div></div>
             </div>
-
-            <div class="page-item" id="p-pos">
-                <div class="card-custom border-top border-success border-4">
-                    <h5 class="fw-bold mb-3">🛒 فاتورة بيع</h5>
-                    <input type="text" id="pos-search" class="form-control mb-2" placeholder="بحث عن صنف..." onkeyup="filterPOS()">
-                    <select id="pos-select" class="form-select mb-3" size="5" onchange="autoPrice()"></select>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6"><input type="number" id="pos-qty" class="form-control" value="1"></div>
-                        <div class="col-6"><input type="number" id="pos-price" class="form-control" placeholder="السعر"></div>
-                    </div>
-                    <button class="btn btn-success w-100 py-3 fw-bold" onclick="submitSale()">تأكيد ✅</button>
-                </div>
+            <div class="card-custom">
+                <h6 class="fw-bold mb-2">🚨 النواقص</h6>
+                <div id="low-stock-container"></div>
             </div>
-
-            <div class="page-item" id="p-stock">
-                <div class="card-custom border-top border-primary border-4">
-                    <h5 id="stock-title" class="fw-bold mb-3">📦 إدارة الأصناف</h5>
-                    <input id="st-name" class="form-control mb-2" placeholder="اسم المنتج">
-                    <div class="row g-2 mb-3">
-                        <div class="col-4"><input id="st-qty" type="number" class="form-control" placeholder="كمية"></div>
-                        <div class="col-4"><input id="st-buy" type="number" class="form-control" placeholder="شراء"></div>
-                        <div class="col-4"><input id="st-sell" type="number" class="form-control" placeholder="بيع"></div>
-                    </div>
-                    <button class="btn btn-primary w-100 fw-bold" onclick="saveToStock()">حفظ</button>
-                </div>
-                <div id="stock-list-container"></div>
+            <div class="card-custom">
+                <h6 class="fw-bold mb-2">📊 مبيعات اليوم</h6>
+                <table class="table table-sm small"><tbody id="sales-table-body"></tbody></table>
+                <div class="d-flex justify-content-between fw-bold pt-2 border-top"><span>الإجمالي:</span><span id="stat-total-sales">0</span></div>
             </div>
-
+            <button class="btn btn-dark w-100 mb-2" onclick="window.print()">🖨️ طباعة</button>
+            <button class="btn btn-outline-warning btn-sm w-100" onclick="clearDaySales()">🔄 تصفير اليوم</button>
         </div>
+
+        <div id="p-pos" class="page">
+            <div class="card-custom">
+                <h5 class="fw-bold mb-3">🛒 بيع سريع</h5>
+                <input type="text" id="pos-search" class="form-control mb-2" placeholder="ابحث..." onkeyup="filterPOS()">
+                <select id="pos-select" class="form-select mb-3" size="5" onchange="autoPrice()"></select>
+                <div class="row g-2 mb-3">
+                    <div class="col-6"><label class="small">الكمية</label><input type="number" id="pos-qty" class="form-control fw-bold" value="1"></div>
+                    <div class="col-6"><label class="small">السعر</label><input type="number" id="pos-price" class="form-control fw-bold text-success"></div>
+                </div>
+                <button class="btn btn-success w-100 py-3 fw-bold" onclick="submitSale()">تأكيد العملية ✅</button>
+            </div>
+        </div>
+
+        <div id="p-stock" class="page">
+            <div class="card-custom">
+                <h6 id="stock-title" class="fw-bold mb-3">📦 إضافة للمخزن</h6>
+                <input id="st-name" class="form-control mb-2" placeholder="الاسم">
+                <div class="row g-1 mb-2">
+                    <div class="col-4"><input id="st-qty" type="number" class="form-control" placeholder="كمية"></div>
+                    <div class="col-4"><input id="st-buy" type="number" class="form-control" placeholder="شراء"></div>
+                    <div class="col-4"><input id="st-sell" type="number" class="form-control" placeholder="بيع"></div>
+                </div>
+                <button class="btn btn-primary w-100 btn-sm" onclick="saveToStock()">حفظ</button>
+            </div>
+            <div id="stock-list-container"></div>
+        </div>
+
     </div>
 
     <nav class="nav-bottom no-print">
-        <div class="nav-link-custom active" id="btn0" onclick="jump(0)">📊<br>التقارير</div>
-        <div class="nav-link-custom" id="btn1" onclick="jump(1)">🛒<br>البيع</div>
-        <div class="nav-link-custom" id="btn2" onclick="jump(2)">📦<br>المخزن</div>
+        <div class="nav-link-custom active" onclick="scrollToPage(0)"><span>📊 التقارير</span></div>
+        <div class="nav-link-custom" onclick="scrollToPage(1)"><span>🛒 البيع</span></div>
+        <div class="nav-link-custom" onclick="scrollToPage(2)"><span>📦 المخزن</span></div>
     </nav>
 </div>
 
 <script>
-// --- إعدادات Firebase ---
+// الإعدادات (نفس بياناتك السابقة)
 const firebaseConfig = {
     apiKey: "AIzaSyAYJwvrBLc_svZ2IcWBzrBbK_ZpUqX0G8M",
     databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
@@ -154,117 +136,155 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const rdb = firebase.database();
-
 let sid = localStorage.getItem('m_taha_sid'), data = { p: [], s: [] }, editIdx = -1;
-let currentIdx = 0;
-const totalPages = 3;
 
-// --- نظام السحب الدائري المحسن ---
-const slider = document.getElementById('main-slider');
-const area = document.getElementById('touch-area');
-let startX = 0;
+// --- نظام التنقل عبر السحب (Swipe Logic) ---
+function scrollToPage(index) {
+    const container = document.getElementById('pages-container');
+    const width = container.offsetWidth;
+    container.scrollTo({ left: index * width, behavior: 'smooth' });
+}
 
-area.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
-area.addEventListener('touchend', (e) => {
-    let diff = startX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 60) {
-        if (diff > 0) currentIdx = (currentIdx + 1) % totalPages;
-        else currentIdx = (currentIdx - 1 + totalPages) % totalPages;
-        jump(currentIdx);
-    }
-});
-
-function jump(idx) {
-    currentIdx = idx;
-    slider.style.transform = `translateX(${currentIdx * 100}vw)`;
-    document.querySelectorAll('.nav-link-custom').forEach((btn, i) => {
-        btn.classList.toggle('active', i === currentIdx);
+function syncNav() {
+    const container = document.getElementById('pages-container');
+    const index = Math.round(container.scrollLeft / container.offsetWidth);
+    const navs = document.querySelectorAll('.nav-link-custom');
+    navs.forEach((n, i) => {
+        if(i === index) n.classList.add('active');
+        else n.classList.remove('active');
     });
 }
 
-// --- وظائف النظام ---
+// --- بقية وظائف النظام (معدلة لتناسب الهواتف) ---
 function login() {
     const code = document.getElementById('auth-code').value.trim();
+    if(!code) return;
     rdb.ref('active_stores/'+code).once('value', s => {
-        if(s.exists()){ localStorage.setItem('m_taha_sid', code); location.reload(); }
-        else document.getElementById('login-err').classList.remove('d-none');
+        if(s.exists()){ localStorage.setItem('m_taha_sid', code); sid = code; initApp(s.val().name); }
+        else { document.getElementById('login-err').classList.remove('d-none'); }
     });
 }
 
-if(sid) rdb.ref('active_stores/'+sid).once('value', s => { 
-    if(s.exists()){
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        document.getElementById('store-title').innerText = s.val().name;
-        rdb.ref('stores_data/'+sid).on('value', ss => { data = ss.val() || { p: [], s: [] }; renderData(); });
-    } else logout();
-});
+if(sid) rdb.ref('active_stores/'+sid).once('value', s => { if(s.exists()) initApp(s.val().name); else logout(); });
+
+function initApp(name) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('store-title').innerText = name;
+    rdb.ref('stores_data/'+sid).on('value', ss => {
+        data = ss.val() || { p: [], s: [] };
+        renderData();
+    });
+}
 
 function logout() { localStorage.clear(); location.reload(); }
-
-function filterPOS() {
-    const q = document.getElementById('pos-search').value.toLowerCase();
-    const sel = document.getElementById('pos-select'); sel.innerHTML = "";
-    (data.p || []).forEach((p, i) => {
-        if(p.name.toLowerCase().includes(q)) sel.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`;
-    });
-}
 
 function autoPrice() {
     const i = document.getElementById('pos-select').value;
     if(i !== "") document.getElementById('pos-price').value = data.p[i].sell;
 }
 
+function filterPOS() {
+    const q = document.getElementById('pos-search').value.toLowerCase();
+    const sel = document.getElementById('pos-select'); sel.innerHTML = "";
+    (data.p || []).forEach((p, i) => {
+        if(p.name.toLowerCase().includes(q))
+            sel.innerHTML += `<option value="${i}">${p.name} (${p.qty})</option>`;
+    });
+}
+
 function submitSale() {
     const i = document.getElementById('pos-select').value, q = +document.getElementById('pos-qty').value, pr = +document.getElementById('pos-price').value;
-    if(i === "" || q <= 0) return alert("خطأ في البيانات");
+    if(i === "" || q <= 0) return alert("اختر صنف وكمية");
+    if(data.p[i].qty < q) return alert("المخزن لا يكفي!");
+
     const today = new Date().toLocaleDateString('ar-EG');
     if(!data.s) data.s = [];
     data.s.push({ n: data.p[i].name, q: q, t: q*pr, c: q*data.p[i].buy, d: today });
     data.p[i].qty -= q;
-    rdb.ref('stores_data/'+sid).set(data).then(() => alert("تمت العملية ✅"));
+    
+    rdb.ref('stores_data/'+sid).set(data).then(() => {
+        alert("تمت ✅");
+        document.getElementById('pos-qty').value = 1;
+        document.getElementById('pos-price').value = "";
+    });
 }
 
 function saveToStock() {
     const n = document.getElementById('st-name').value, q = +document.getElementById('st-qty').value, b = +document.getElementById('st-buy').value, s = +document.getElementById('st-sell').value;
-    if(!n) return;
+    if(!n) return alert("أدخل الاسم");
     if(!data.p) data.p = [];
-    if(editIdx > -1) { data.p[editIdx] = {name:n, qty:q, buy:b, sell:s}; editIdx = -1; }
-    else data.p.push({name:n, qty:q, buy:b, sell:s});
-    rdb.ref('stores_data/'+sid).set(data).then(() => { alert("تم الحفظ"); location.reload(); });
+
+    if(editIdx > -1) {
+        data.p[editIdx] = { name:n, qty:q, buy:b, sell:s };
+        editIdx = -1;
+        document.getElementById('stock-title').innerText = "📦 إضافة للمخزن";
+    } else {
+        data.p.push({ name:n, qty:q, buy:b, sell:s });
+    }
+    rdb.ref('stores_data/'+sid).set(data).then(() => {
+        document.getElementById('st-name').value = "";
+        document.getElementById('st-qty').value = "";
+        document.getElementById('st-buy').value = "";
+        document.getElementById('st-sell').value = "";
+    });
 }
 
 function renderData() {
     const today = new Date().toLocaleDateString('ar-EG');
-    let pft = 0, ttl = 0, stVal = 0;
+    let pft = 0, ttlSales = 0, stValue = 0;
     const sBody = document.getElementById('sales-table-body'); sBody.innerHTML = "";
     const lowCont = document.getElementById('low-stock-container'); lowCont.innerHTML = "";
     const stCont = document.getElementById('stock-list-container'); stCont.innerHTML = "";
 
-    (data.s || []).forEach(x => {
-        if(x.d === today) { pft += (x.t - x.c); ttl += x.t; sBody.innerHTML += `<tr><td>${x.n}</td><td>${x.q}</td><td>${x.t}</td></tr>`; }
+    (data.s || []).forEach((x, idx) => {
+        if(x.d === today) {
+            pft += (x.t - x.c); ttlSales += x.t;
+            sBody.innerHTML += `<tr><td>${x.n}</td><td>${x.q}</td><td>${x.t} ج</td><td><button class="btn btn-sm text-danger" onclick="delSale(${idx})">×</button></td></tr>`;
+        }
     });
 
     (data.p || []).forEach((p, i) => {
-        stVal += (p.buy * p.qty);
-        stCont.innerHTML += `<div class="card-custom d-flex justify-content-between"><span>${p.name} (${p.qty})</span> <button class="btn btn-sm btn-light" onclick="editStock(${i})">✏️</button></div>`;
-        if(p.qty <= 3) lowCont.innerHTML += `<div class="alert-low">⚠️ ${p.name} (بقي ${p.qty})</div>`;
+        stValue += (p.buy * p.qty);
+        stCont.innerHTML += `<div class="card-custom d-flex justify-content-between align-items-center mb-2 p-2">
+            <div><b class="small d-block">${p.name}</b><small>كمية: ${p.qty} | سعر: ${p.sell}</small></div>
+            <div><button class="btn btn-sm btn-light" onclick="editStock(${i})">✏️</button><button class="btn btn-sm btn-light text-danger" onclick="delStock(${i})">🗑️</button></div>
+        </div>`;
+        if(p.qty <= 3) lowCont.innerHTML += `<div class="alert-low">⚠️ ${p.name} (${p.qty})</div>`;
     });
 
+    if(!lowCont.innerHTML) lowCont.innerHTML = "<small class='text-success'>✅ كل شيء متوفر</small>";
     document.getElementById('stat-profit').innerText = pft.toLocaleString();
-    document.getElementById('stat-total-sales').innerText = ttl.toLocaleString() + " ج";
-    document.getElementById('stat-stock-val').innerText = stVal.toLocaleString();
+    document.getElementById('stat-total-sales').innerText = ttlSales.toLocaleString() + " ج";
+    document.getElementById('stat-stock-val').innerText = stValue.toLocaleString();
     filterPOS();
 }
 
 function editStock(i) {
-    editIdx = i;
     const p = data.p[i];
     document.getElementById('st-name').value = p.name;
     document.getElementById('st-qty').value = p.qty;
     document.getElementById('st-buy').value = p.buy;
     document.getElementById('st-sell').value = p.sell;
-    jump(2);
+    editIdx = i;
+    document.getElementById('stock-title').innerText = "✏️ تعديل " + p.name;
+    scrollToPage(2);
+}
+
+function delStock(i) { if(confirm("حذف؟")) { data.p.splice(i,1); rdb.ref('stores_data/'+sid).set(data); } }
+function delSale(i) { if(confirm("إلغاء البيع؟")) { 
+    const item = data.s[i];
+    const pIdx = data.p.findIndex(p => p.name === item.n);
+    if(pIdx > -1) data.p[pIdx].qty += item.q;
+    data.s.splice(i,1); 
+    rdb.ref('stores_data/'+sid).set(data); 
+}}
+
+function clearDaySales() {
+    if(confirm("يا محمد طه، تصفير مبيعات اليوم؟")) {
+        const pass = prompt("كود المتجر:");
+        if(pass === sid) { data.s = []; rdb.ref('stores_data/'+sid).set(data); }
+    }
 }
 </script>
 </body>
