@@ -6,7 +6,7 @@
     <title>نظام إدارة العمليات | شركة محمد طه</title>
     <style>
         :root {
-            --primary-color: #1e3a8a; /* أزرق ملكي مهني */
+            --primary-color: #1e3a8a;
             --secondary-color: #64748b;
             --success: #10b981;
             --warning: #f59e0b;
@@ -14,43 +14,49 @@
             --bg: #f8fafc;
         }
 
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; user-select: none; }
         .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
         
         /* الهيدر */
-        .header-bar { background: var(--primary-color); color: white; padding: 20px; text-align: center; }
-        .header-bar h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        .header-bar { background: var(--primary-color); color: white; padding: 25px; text-align: center; border-bottom: 4px solid #1e40af; }
+        .header-bar h1 { margin: 0; font-size: 26px; font-weight: 800; }
+        .header-bar p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
 
         /* لوحة الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #e2e8f0; }
-        .stat-card { padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; }
-        .stat-card span { display: block; font-size: 20px; font-weight: bold; }
+        .stat-card { padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .stat-card p { margin: 0; color: var(--secondary-color); font-size: 14px; }
+        .stat-card span { display: block; font-size: 24px; font-weight: bold; color: var(--primary-color); }
 
         /* منطقة الإدخال المهنية */
-        .action-area { padding: 20px; background: #f1f5f9; display: flex; gap: 10px; flex-wrap: wrap; }
-        .input-field { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; transition: 0.3s; }
-        .input-field:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn-main { background: var(--primary-color); color: white; }
-        .btn-main:hover { background: #1e40af; }
+        .action-area { padding: 25px; background: #f1f5f9; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid #ddd; }
+        .input-field { flex: 2; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-size: 15px; }
+        .file-upload-wrapper { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 200px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; white-space: nowrap; }
+        .btn-upload { background: #64748b; color: white; font-size: 14px; }
+        .btn-main { background: var(--primary-color); color: white; flex: 0.5; }
+        .btn-main:hover { background: #1e40af; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
+        #fileNameDisplay { font-size: 12px; color: var(--primary-color); font-weight: bold; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
 
         /* التبويبات */
         .tab-container { padding: 0 20px; background: #fff; display: flex; border-bottom: 2px solid #f1f5f9; }
-        .tab { padding: 15px 25px; cursor: pointer; color: var(--secondary-color); font-weight: 500; border-bottom: 3px solid transparent; }
+        .tab { padding: 15px 25px; cursor: pointer; color: var(--secondary-color); font-weight: 600; border-bottom: 3px solid transparent; transition: 0.3s; }
         .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: #f8fafc; }
 
-        /* الجدول المهني */
+        /* الجدول */
         .table-wrapper { padding: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: #f8fafc; padding: 15px; text-align: center; font-size: 13px; text-transform: uppercase; color: var(--secondary-color); border-bottom: 2px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f8fafc; padding: 15px; text-align: center; font-size: 13px; color: var(--secondary-color); border-bottom: 2px solid #e2e8f0; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         
-        .badge { padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .badge { padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
         .bg-pending { background: #fef3c7; color: #92400e; }
         .bg-success { background: #d1fae5; color: #065f46; }
         
-        .delete-icon { color: var(--danger); cursor: pointer; font-size: 18px; border: none; background: none; }
-        .delete-icon:hover { transform: scale(1.2); }
+        .delete-icon { color: var(--danger); cursor: pointer; font-size: 18px; border: none; background: none; transition: 0.2s; }
+        .delete-icon:hover { transform: scale(1.3); }
+        .time-cell { font-size: 12px; color: #64748b; line-height: 1.4; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -58,12 +64,12 @@
 <div class="dashboard">
     <div class="header-bar">
         <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <small>نظام الأرشفة والطباعة المركزي - نسخة 2026</small>
+        <p>النظام المركزي الموحد لخدمة العملاء والطباعة</p>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card" style="border-top: 4px solid var(--primary-color);">
-            <p>إجمالي المعاملات</p>
+            <p>إجمالي معاملات العملاء</p>
             <span id="totalCount">0</span>
         </div>
         <div class="stat-card" style="border-top: 4px solid var(--warning);">
@@ -71,133 +77,152 @@
             <span id="pendingCount">0</span>
         </div>
         <div class="stat-card" style="border-top: 4px solid var(--success);">
-            <p>تمت الطباعة</p>
+            <p>تمت الطباعة بنجاح</p>
             <span id="doneCount">0</span>
         </div>
     </div>
 
     <div class="action-area">
-        <input type="text" id="client" class="input-field" placeholder="اسم العميل الكامل">
-        <input type="text" id="file" class="input-field" placeholder="وصف الملف (مثلاً: فاتورة ضريبية)">
-        <button class="btn btn-main" onclick="addEntry()">إضافة للسجل</button>
+        <input type="text" id="clientName" class="input-field" placeholder="اسم العميل الكامل">
+        
+        <div class="file-upload-wrapper">
+            <input type="file" id="fileInput" style="display: none;" onchange="updateFileNameDisplay()">
+            <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">📎 ارفق ملف PDF</button>
+            <span id="fileNameDisplay">لم يتم اختيار ملف</span>
+        </div>
+
+        <button class="btn btn-main" onclick="addOrder()">🚀 تنفيذ الطلب</button>
     </div>
 
     <div class="tab-container">
-        <div class="tab active" onclick="filterData('all', this)">كل السجلات</div>
-        <div class="tab" onclick="filterData('pending', this)">بانتظار الطباعة</div>
-        <div class="tab" onclick="filterData('done', this)">سجل المطبوعات</div>
+        <div class="tab active" onclick="filterTable('all', this)">كل السجلات</div>
+        <div class="tab" onclick="filterTable('pending', this)">قيد التجهيز</div>
+        <div class="tab" onclick="filterTable('done', this)">المنتهية</div>
     </div>
 
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>توقيت الطلب</th>
+                    <th>المعرف (ID)</th>
+                    <th>توقيت العملية</th>
                     <th>اسم العميل</th>
-                    <th>مسمى الملف</th>
-                    <th>الحالة التشغيلية</th>
+                    <th>الملف المرفق</th>
+                    <th>حالة الطلب</th>
                     <th>الإجراء</th>
                 </tr>
             </thead>
-            <tbody id="masterTable">
+            <tbody id="mainTable">
                 </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    let entries = [];
-    const _SYS_KEY = "MT-1998";
+    let orders = [];
+    const SYSTEM_CODE = "MT-1998-SECURE";
 
-    function addEntry() {
-        const client = document.getElementById('client').value;
-        const file = document.getElementById('file').value;
-        
-        if (!client || !file) {
-            alert("تنبيه مهني: يرجى استكمال بيانات العميل والملف.");
+    // تحديث نص اسم الملف
+    function updateFileNameDisplay() {
+        const input = document.getElementById('fileInput');
+        const display = document.getElementById('fileNameDisplay');
+        display.innerText = input.files.length > 0 ? input.files[0].name : "لم يتم اختيار ملف";
+    }
+
+    // إضافة طلب جديد
+    function addOrder() {
+        const client = document.getElementById('clientName').value;
+        const fileInput = document.getElementById('fileInput');
+
+        if (!client || fileInput.files.length === 0) {
+            alert("تنبيه إداري: نرجو من عملائنا استكمال البيانات واختيار الملف أولاً.");
             return;
         }
 
-        const newEntry = {
-            id: entries.length + 1,
+        const newOrder = {
+            id: orders.length + 1,
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             client: client,
-            file: file,
+            fileName: fileInput.files[0].name,
             status: 'pending'
         };
 
-        entries.unshift(newEntry);
-        updateUI();
-        document.getElementById('client').value = '';
-        document.getElementById('file').value = '';
+        orders.unshift(newOrder); // وضع الأحدث في البداية
+        renderUI();
+        
+        // إعادة تهيئة الحقول
+        document.getElementById('clientName').value = '';
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileNameDisplay').innerText = "لم يتم اختيار ملف";
     }
 
-    function updateUI() {
-        const tbody = document.getElementById('masterTable');
+    // بناء الواجهة
+    function renderUI() {
+        const tbody = document.getElementById('mainTable');
         tbody.innerHTML = '';
 
-        entries.forEach(item => {
+        orders.forEach(order => {
             const row = document.createElement('tr');
-            row.setAttribute('data-id', item.id);
+            row.setAttribute('data-status', order.status);
             row.innerHTML = `
-                <td>#${item.id}</td>
-                <td><small>${item.date}<br>${item.time}</small></td>
-                <td><strong>${item.client}</strong></td>
-                <td>📄 ${item.file}</td>
+                <td><strong>#${order.id}</strong></td>
+                <td class="time-cell">${order.date}<br>${order.time}</td>
+                <td>${order.client}</td>
+                <td style="color:var(--primary-color)">📄 ${order.fileName}</td>
                 <td>
-                    <span class="badge ${item.status === 'pending' ? 'bg-pending' : 'bg-success'}" 
-                          onclick="toggleEntryStatus(${item.id})">
-                        ${item.status === 'pending' ? 'قيد التجهيز' : 'تمت الطباعة'}
-                    </span>
+                    <button class="badge ${order.status === 'pending' ? 'bg-pending' : 'bg-success'}" 
+                            onclick="updateStatus(${order.id})">
+                        ${order.status === 'pending' ? 'قيد التجهيز' : 'تمت الطباعة'}
+                    </button>
                 </td>
-                <td><button class="delete-icon" onclick="removeEntry(${item.id})">🗑</button></td>
+                <td><button class="delete-icon" onclick="deleteOrder(${order.id})">🗑</button></td>
             `;
             tbody.appendChild(row);
         });
 
-        // تحديث العدادات
-        document.getElementById('totalCount').innerText = entries.length;
-        document.getElementById('pendingCount').innerText = entries.filter(e => e.status === 'pending').length;
-        document.getElementById('doneCount').innerText = entries.filter(e => e.status === 'done').length;
+        // تحديث الإحصائيات
+        document.getElementById('totalCount').innerText = orders.length;
+        document.getElementById('pendingCount').innerText = orders.filter(o => o.status === 'pending').length;
+        document.getElementById('doneCount').innerText = orders.filter(o => o.status === 'done').length;
     }
 
-    function toggleEntryStatus(id) {
-        const item = entries.find(e => e.id === id);
-        if (item) {
-            item.status = item.status === 'pending' ? 'done' : 'pending';
-            updateUI();
+    // تغيير الحالة (كما في الفيديو)
+    function updateStatus(id) {
+        const order = orders.find(o => o.id === id);
+        if (order) {
+            order.status = order.status === 'pending' ? 'done' : 'pending';
+            renderUI();
         }
     }
 
-    function removeEntry(id) {
-        if(confirm("إجراء إداري: هل أنت متأكد من حذف هذا السجل؟")) {
-            entries = entries.filter(e => e.id !== id);
-            updateUI();
+    // الحذف
+    function deleteOrder(id) {
+        if (confirm("هل أنت متأكد من حذف سجل هذا العميل؟")) {
+            orders = orders.filter(o => o.id !== id);
+            renderUI();
         }
     }
 
-    function filterData(status, tabEl) {
+    // الفلترة بالتبويب
+    function filterTable(status, tabEl) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tabEl.classList.add('active');
         
-        const rows = document.querySelectorAll('#masterTable tr');
+        const rows = document.querySelectorAll('#mainTable tr');
         rows.forEach(row => {
-            const id = parseInt(row.getAttribute('data-id'));
-            const item = entries.find(e => e.id === id);
-            if (status === 'all' || item.status === status) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            const rowStatus = row.getAttribute('data-status');
+            row.style.display = (status === 'all' || rowStatus === status) ? '' : 'none';
         });
     }
 
-    // منع اختصارات المطورين
+    // حماية الصفحة من العبث
     document.onkeydown = function(e) {
         if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false;
     };
+    
+    // تشغيل النظام تلقائياً
+    console.log("نظام شركة محمد طه - تفعيل كود 1998 متاح الآن.");
 </script>
 
 </body>
