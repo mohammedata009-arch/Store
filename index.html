@@ -3,60 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة العمليات | شركة محمد طه</title>
+    <title>شركة محمد طه لإدارة الخدمات - النظام السحابي</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
+
     <style>
-        :root {
-            --primary-color: #1e3a8a;
-            --secondary-color: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --bg: #f8fafc;
-        }
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; user-select: none; }
-        .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
-        
-        /* الهيدر */
-        .header-bar { background: var(--primary-color); color: white; padding: 25px; text-align: center; border-bottom: 4px solid #1e40af; }
-        .header-bar h1 { margin: 0; font-size: 26px; font-weight: 800; }
-        .header-bar p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
-
-        /* لوحة الإحصائيات */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #e2e8f0; }
-        .stat-card { padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card p { margin: 0; color: var(--secondary-color); font-size: 14px; }
-        .stat-card span { display: block; font-size: 24px; font-weight: bold; color: var(--primary-color); }
-
-        /* منطقة الإدخال المهنية */
-        .action-area { padding: 25px; background: #f1f5f9; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid #ddd; }
-        .input-field { flex: 2; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-size: 15px; }
-        .file-upload-wrapper { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 200px; }
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; white-space: nowrap; }
-        .btn-upload { background: #64748b; color: white; font-size: 14px; }
-        .btn-main { background: var(--primary-color); color: white; flex: 0.5; }
-        .btn-main:hover { background: #1e40af; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
-        #fileNameDisplay { font-size: 12px; color: var(--primary-color); font-weight: bold; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-
-        /* التبويبات */
-        .tab-container { padding: 0 20px; background: #fff; display: flex; border-bottom: 2px solid #f1f5f9; }
-        .tab { padding: 15px 25px; cursor: pointer; color: var(--secondary-color); font-weight: 600; border-bottom: 3px solid transparent; transition: 0.3s; }
-        .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: #f8fafc; }
-
-        /* الجدول */
-        .table-wrapper { padding: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #f8fafc; padding: 15px; text-align: center; font-size: 13px; color: var(--secondary-color); border-bottom: 2px solid #e2e8f0; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        
-        .badge { padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
+        :root { --primary: #1e3a8a; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; direction: rtl; }
+        .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header-bar { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; border-bottom: 1px solid #eee; }
+        .stat-card { padding: 10px; text-align: center; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 3px solid var(--primary); }
+        .stat-card span { display: block; font-size: 20px; font-weight: bold; }
+        .action-area { padding: 15px; background: #f1f5f9; display: flex; flex-wrap: wrap; gap: 10px; }
+        .input-field { flex: 2; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-main { background: var(--primary); color: white; }
+        .tabs { display: flex; background: #fff; border-bottom: 2px solid #f1f5f9; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .badge { padding: 5px 10px; border-radius: 50px; font-size: 11px; cursor: pointer; }
         .bg-pending { background: #fef3c7; color: #92400e; }
         .bg-success { background: #d1fae5; color: #065f46; }
-        
-        .delete-icon { color: var(--danger); cursor: pointer; font-size: 18px; border: none; background: none; transition: 0.2s; }
-        .delete-icon:hover { transform: scale(1.3); }
-        .time-cell { font-size: 12px; color: #64748b; line-height: 1.4; }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -64,166 +36,139 @@
 <div class="dashboard">
     <div class="header-bar">
         <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <p>النظام المركزي الموحد لخدمة العملاء والطباعة</p>
+        <p>النظام السحابي الموحد - الحفظ التلقائي مفعل ✅</p>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card" style="border-top: 4px solid var(--primary-color);">
-            <p>إجمالي معاملات العملاء</p>
-            <span id="totalCount">0</span>
-        </div>
-        <div class="stat-card" style="border-top: 4px solid var(--warning);">
-            <p>قيد التجهيز</p>
-            <span id="pendingCount">0</span>
-        </div>
-        <div class="stat-card" style="border-top: 4px solid var(--success);">
-            <p>تمت الطباعة بنجاح</p>
-            <span id="doneCount">0</span>
-        </div>
+    <div class="stats">
+        <div class="stat-card"> <p>إجمالي المعاملات</p><span id="total">0</span> </div>
+        <div class="stat-card" style="border-top-color: var(--warning);"> <p>قيد التجهيز</p><span id="pending">0</span> </div>
+        <div class="stat-card" style="border-top-color: var(--success);"> <p>تمت الطباعة</p><span id="done">0</span> </div>
     </div>
 
-    <div class="action-area">
+    <div class="action-area no-print">
         <input type="text" id="clientName" class="input-field" placeholder="اسم العميل الكامل">
-        
-        <div class="file-upload-wrapper">
-            <input type="file" id="fileInput" style="display: none;" onchange="updateFileNameDisplay()">
-            <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">📎 ارفق ملف PDF</button>
-            <span id="fileNameDisplay">لم يتم اختيار ملف</span>
-        </div>
-
-        <button class="btn btn-main" onclick="addOrder()">🚀 تنفيذ الطلب</button>
+        <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileLabel').innerText=this.files[0].name">
+        <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">ارفق ملف PDF</span></button>
+        <button id="addBtn" class="btn btn-main" onclick="uploadAndAdd()">🚀 تنفيذ الطلب</button>
+        <input type="text" id="search" style="width:100%; padding:8px;" onkeyup="filterTable()" placeholder="🔍 ابحث هنا...">
     </div>
 
-    <div class="tab-container">
-        <div class="tab active" onclick="filterTable('all', this)">كل السجلات</div>
-        <div class="tab" onclick="filterTable('pending', this)">قيد التجهيز</div>
-        <div class="tab" onclick="filterTable('done', this)">المنتهية</div>
-    </div>
-
-    <div class="table-wrapper">
+    <div class="table-wrapper" style="overflow-x:auto;">
         <table>
             <thead>
                 <tr>
-                    <th>المعرف (ID)</th>
-                    <th>توقيت العملية</th>
                     <th>اسم العميل</th>
-                    <th>الملف المرفق</th>
-                    <th>حالة الطلب</th>
-                    <th>الإجراء</th>
+                    <th>الملف المرفوع</th>
+                    <th>الحالة</th>
+                    <th>ملاحظات</th>
+                    <th class="no-print">إجراءات</th>
                 </tr>
             </thead>
-            <tbody id="mainTable">
-                </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    let orders = [];
-    const SYSTEM_CODE = "MT-1998-SECURE";
-
-    // تحديث نص اسم الملف
-    function updateFileNameDisplay() {
-        const input = document.getElementById('fileInput');
-        const display = document.getElementById('fileNameDisplay');
-        display.innerText = input.files.length > 0 ? input.files[0].name : "لم يتم اختيار ملف";
-    }
-
-    // إضافة طلب جديد
-    function addOrder() {
-        const client = document.getElementById('clientName').value;
-        const fileInput = document.getElementById('fileInput');
-
-        if (!client || fileInput.files.length === 0) {
-            alert("تنبيه إداري: نرجو من عملائنا استكمال البيانات واختيار الملف أولاً.");
-            return;
-        }
-
-        const newOrder = {
-            id: orders.length + 1,
-            time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
-            date: new Date().toLocaleDateString('ar-EG'),
-            client: client,
-            fileName: fileInput.files[0].name,
-            status: 'pending'
-        };
-
-        orders.unshift(newOrder); // وضع الأحدث في البداية
-        renderUI();
-        
-        // إعادة تهيئة الحقول
-        document.getElementById('clientName').value = '';
-        document.getElementById('fileInput').value = '';
-        document.getElementById('fileNameDisplay').innerText = "لم يتم اختيار ملف";
-    }
-
-    // بناء الواجهة
-    function renderUI() {
-        const tbody = document.getElementById('mainTable');
-        tbody.innerHTML = '';
-
-        orders.forEach(order => {
-            const row = document.createElement('tr');
-            row.setAttribute('data-status', order.status);
-            row.innerHTML = `
-                <td><strong>#${order.id}</strong></td>
-                <td class="time-cell">${order.date}<br>${order.time}</td>
-                <td>${order.client}</td>
-                <td style="color:var(--primary-color)">📄 ${order.fileName}</td>
-                <td>
-                    <button class="badge ${order.status === 'pending' ? 'bg-pending' : 'bg-success'}" 
-                            onclick="updateStatus(${order.id})">
-                        ${order.status === 'pending' ? 'قيد التجهيز' : 'تمت الطباعة'}
-                    </button>
-                </td>
-                <td><button class="delete-icon" onclick="deleteOrder(${order.id})">🗑</button></td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        // تحديث الإحصائيات
-        document.getElementById('totalCount').innerText = orders.length;
-        document.getElementById('pendingCount').innerText = orders.filter(o => o.status === 'pending').length;
-        document.getElementById('doneCount').innerText = orders.filter(o => o.status === 'done').length;
-    }
-
-    // تغيير الحالة (كما في الفيديو)
-    function updateStatus(id) {
-        const order = orders.find(o => o.id === id);
-        if (order) {
-            order.status = order.status === 'pending' ? 'done' : 'pending';
-            renderUI();
-        }
-    }
-
-    // الحذف
-    function deleteOrder(id) {
-        if (confirm("هل أنت متأكد من حذف سجل هذا العميل؟")) {
-            orders = orders.filter(o => o.id !== id);
-            renderUI();
-        }
-    }
-
-    // الفلترة بالتبويب
-    function filterTable(status, tabEl) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tabEl.classList.add('active');
-        
-        const rows = document.querySelectorAll('#mainTable tr');
-        rows.forEach(row => {
-            const rowStatus = row.getAttribute('data-status');
-            row.style.display = (status === 'all' || rowStatus === status) ? '' : 'none';
-        });
-    }
-
-    // حماية الصفحة من العبث
-    document.onkeydown = function(e) {
-        if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false;
+    // إعدادات Firebase الخاصة بك ✅
+    const firebaseConfig = {
+        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
+        authDomain: "store-project-b023e.firebaseapp.com",
+        projectId: "store-project-b023e",
+        storageBucket: "store-project-b023e.firebasestorage.app",
+        messagingSenderId: "561530737705",
+        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
     };
-    
-    // تشغيل النظام تلقائياً
-    console.log("نظام شركة محمد طه - تفعيل كود 1998 متاح الآن.");
-</script>
 
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // رفع الملف وإضافة البيانات سحابياً
+    async function uploadAndAdd() {
+        const name = document.getElementById('clientName').value;
+        const file = document.getElementById('fileInput').files[0];
+        const btn = document.getElementById('addBtn');
+
+        if(!name || !file) return alert("أكمل البيانات");
+
+        btn.innerText = "جاري الرفع...";
+        btn.disabled = true;
+
+        try {
+            // 1. رفع الملف لـ Firebase Storage
+            const fileRef = storage.ref('files/' + Date.now() + "_" + file.name);
+            await fileRef.put(file);
+            const fileURL = await fileRef.getDownloadURL();
+
+            // 2. حفظ البيانات في Firestore
+            await db.collection('orders').add({
+                client: name,
+                fileName: file.name,
+                fileURL: fileURL,
+                status: 'pending',
+                note: '',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            document.getElementById('clientName').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileLabel').innerText = "ارفق ملف PDF";
+        } catch (e) { alert("خطأ في الرفع: " + e.message); }
+        btn.innerText = "🚀 تنفيذ الطلب";
+        btn.disabled = false;
+    }
+
+    // جلب البيانات لحظياً (Real-time Sync)
+    db.collection('orders').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        let t=0, p=0, d=0;
+
+        snapshot.forEach(doc => {
+            const o = doc.data();
+            t++; o.status === 'pending' ? p++ : d++;
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${o.client}</strong></td>
+                    <td>
+                        <button onclick="window.open('${o.fileURL}')">👁️ فتح</button>
+                        <button onclick="printPdf('${o.fileURL}')">🖨️ طباعة</button>
+                    </td>
+                    <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="updateStatus('${doc.id}', '${o.status}')">${o.status==='pending'?'قيد التجهيز':'تمت الطباعة'}</span></td>
+                    <td><input type="text" value="${o.note}" onchange="updateNote('${doc.id}', this.value)" style="border:none; border-bottom:1px solid #ddd; width:80px;"></td>
+                    <td class="no-print"><button onclick="deleteDoc('${doc.id}')">🗑️</button></td>
+                </tr>
+            `;
+        });
+        document.getElementById('total').innerText = t;
+        document.getElementById('pending').innerText = p;
+        document.getElementById('done').innerText = d;
+    });
+
+    function updateStatus(id, current) {
+        db.collection('orders').doc(id).update({ status: current === 'pending' ? 'done' : 'pending' });
+    }
+
+    function updateNote(id, val) {
+        db.collection('orders').doc(id).update({ note: val });
+    }
+
+    function deleteDoc(id) {
+        if(confirm("حذف الطلب نهائياً؟")) db.collection('orders').doc(id).delete();
+    }
+
+    function printPdf(url) {
+        const win = window.open(url);
+        win.onload = () => win.print();
+    }
+
+    function filterTable() {
+        let v = document.getElementById('search').value.toLowerCase();
+        document.querySelectorAll('#tableBody tr').forEach(tr => {
+            tr.style.display = tr.innerText.toLowerCase().includes(v) ? '' : 'none';
+        });
+    }
+</script>
 </body>
 </html>
