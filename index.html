@@ -2,151 +2,139 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شركة محمد طه لإدارة الخدمات</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
     <style>
-        :root { --primary: #1e3a8a; --accent: #3b82f6; --success: #10b981; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 10px; direction: rtl; }
-        .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow: hidden; }
-        .header-bar { background: var(--primary); color: white; padding: 15px; text-align: center; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; text-align: center; }
-        .stat-card { border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
-        .action-area { padding: 15px; background: #f8fafc; display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #eee; position: relative; }
-        .input-field { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-add { background: var(--primary); color: white; flex-grow: 1; }
-        .btn-file { background: #64748b; color: white; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        th { background: #f8fafc; color: #475569; font-size: 13px; }
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; }
-        .bg-pending { background: #fef3c7; color: #92400e; }
-        .bg-success { background: #d1fae5; color: #065f46; }
-        .row-btn { background: #fff; border: 1px solid #ddd; padding: 5px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; margin: 2px; }
-        @media print { .no-print { display: none !important; } }
+        :root { --primary: #1e3a8a; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .header { text-align: center; color: var(--primary); border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        .input-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 2; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-upload { background-color: var(--primary); color: white; }
+        .btn-file { background-color: #64748b; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background-color: #f1f5f9; color: #475569; }
+        .print-btn { background-color: white; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; border-radius: 5px; }
+        #progBox { width: 100%; height: 8px; background: #eee; display: none; border-radius: 4px; margin-top: 10px; }
+        #progBar { width: 0%; height: 100%; background: #10b981; border-radius: 4px; transition: 0.3s; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-<div class="dashboard">
-    <div class="header-bar">
-        <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <p>نظام الإدارة المتكامل</p>
+<div class="container">
+    <div class="header">
+        <h2>نظام إدارة الخدمات والطباعة</h2>
+        <p>بإشراف المهندس محمد طه عطا المنان</p>
     </div>
 
-    <div class="stats">
-        <div class="stat-card"> <p style="font-size:12px; margin:0;">الإجمالي</p><span id="total" style="font-size:20px; font-weight:bold;">0</span> </div>
-        <div class="stat-card"> <p style="font-size:12px; margin:0;">قيد التجهيز</p><span id="pending" style="font-size:20px; font-weight:bold; color:orange;">0</span> </div>
-        <div class="stat-card"> <p style="font-size:12px; margin:0;">مكتمل</p><span id="done" style="font-size:20px; font-weight:bold; color:green;">0</span> </div>
+    <div class="input-group">
+        <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="document.getElementById('fileLabel').innerText=this.files[0].name">
+        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">اختيار PDF</span></button>
+        <button id="mainBtn" class="btn btn-upload" onclick="processOrder()">🚀 رفع وطباعة</button>
+        <div id="progBox"><div id="progBar"></div></div>
     </div>
 
-    <div class="action-area no-print">
-        <input type="text" id="clientName" class="input-field" placeholder="اسم العميل...">
-        
-        <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileLabel').innerText='مختار: ' + this.files[0].name">
-        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">ارفق ملف PDF</span></button>
-        
-        <button id="addBtn" class="btn btn-add" onclick="uploadData()">➕ إضافة للجدول</button>
-        <input type="text" id="search" style="width:100%; padding:8px; border:1px solid var(--primary); border-radius:6px; margin-top:5px;" onkeyup="filterTable()" placeholder="🔍 ابحث عن اسم...">
-    </div>
-
-    <div style="overflow-x:auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>العميل</th>
-                    <th>اسم الملف</th>
-                    <th>الحالة</th>
-                    <th>ملاحظة</th>
-                    <th class="no-print">إجراء</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>العميل</th>
+                <th>الإجراء</th>
+                <th>الحالة</th>
+                <th>حذف</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+    </table>
 </div>
 
+<iframe id="printFrame" style="display:none"></iframe>
+
 <script>
+    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
         databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
         projectId: "store-project-b023e",
-        storageBucket: "store-project-b023e.firebasestorage.app",
-        messagingSenderId: "561530737705",
         appId: "1:561530737705:web:beefb32c081f9bf8b53838"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    async function uploadData() {
-        const name = document.getElementById('clientName').value;
+    // إعدادات Cloudinary الخاصة بك
+    const CLOUD_NAME = "djygvtpb2"; 
+    const UPLOAD_PRESET = "tahamm";
+
+    async function processOrder() {
         const file = document.getElementById('fileInput').files[0];
-        const btn = document.getElementById('addBtn');
+        const name = document.getElementById('clientName').value;
+        if(!file || !name) return alert("يرجى إكمال البيانات");
 
-        if(!name) return alert("يرجى إدخال الاسم أولاً");
-
+        const btn = document.getElementById('mainBtn');
         btn.disabled = true;
-        
-        const newRef = db.ref('orders').push();
-        await newRef.set({
-            client: name,
-            fileName: file ? file.name : "لم يتم إرفاق ملف",
-            status: 'pending',
-            note: '',
-            time: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            alert("تم الإضافة بنجاح!");
-            resetUI();
-        }).catch(err => alert("خطأ: " + err.message));
-        
-        btn.disabled = false;
+        document.getElementById('progBox').style.display = 'block';
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+
+        try {
+            // الرفع إلى Cloudinary لتجاوز قيود تخزين Firebase المجانية
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (data.secure_url) {
+                // حفظ الرابط في Realtime Database
+                await db.ref('orders').push().set({
+                    client: name,
+                    fileURL: data.secure_url,
+                    status: 'pending'
+                });
+                resetUI();
+            }
+        } catch (e) {
+            alert("حدث خطأ، تأكد من الاتصال بالإنترنت");
+            btn.disabled = false;
+        }
     }
 
     function resetUI() {
         document.getElementById('clientName').value = '';
         document.getElementById('fileInput').value = '';
-        document.getElementById('fileLabel').innerText = "ارفق ملف PDF";
+        document.getElementById('fileLabel').innerText = "اختيار PDF";
+        document.getElementById('mainBtn').disabled = false;
+        document.getElementById('progBox').style.display = 'none';
     }
 
+    // عرض البيانات تلقائياً
     db.ref('orders').on('value', snap => {
-        const tbody = document.getElementById('tableBody');
+        const tbody = document.getElementById('dataTable');
         tbody.innerHTML = '';
-        let t=0, p=0, d=0;
-        
         snap.forEach(child => {
-            const id = child.key;
-            const o = child.val();
-            t++; o.status === 'pending' ? p++ : d++;
-            
+            const item = child.val();
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${o.client}</strong></td>
-                    <td style="font-size:11px; color:#666;">${o.fileName}</td>
-                    <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="toggleStatus('${id}','${o.status}')">${o.status==='pending'?'قيد التجهيز':'مكتمل'}</span></td>
-                    <td><input type="text" value="${o.note || ''}" onblur="updateNote('${id}',this.value)" style="width:100px; border:none; border-bottom:1px solid #ccc; text-align:center;"></td>
-                    <td class="no-print">
-                        <button class="row-btn" style="color:red;" onclick="deleteDoc('${id}')">🗑️</button>
-                    </td>
+                    <td><strong>${item.client}</strong></td>
+                    <td><button class="print-btn" onclick="printDoc('${item.fileURL}')">🖨️ طباعة</button></td>
+                    <td><span style="color:orange">جاهز</span></td>
+                    <td><button onclick="db.ref('orders/${child.key}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
                 </tr>
             `;
         });
-        document.getElementById('total').innerText = t;
-        document.getElementById('pending').innerText = p;
-        document.getElementById('done').innerText = d;
     });
 
-    function toggleStatus(id, s) { db.ref('orders/' + id).update({ status: s==='pending'?'done':'pending' }); }
-    function updateNote(id, v) { db.ref('orders/' + id).update({ note: v }); }
-    function deleteDoc(id) { if(confirm("هل تريد الحذف؟")) db.ref('orders/' + id).remove(); }
-    function filterTable() {
-        let q = document.getElementById('search').value.toLowerCase();
-        document.querySelectorAll('#tableBody tr').forEach(tr => tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none');
+    function printDoc(url) {
+        const frame = document.getElementById('printFrame');
+        frame.src = url;
+        frame.onload = () => { frame.contentWindow.print(); };
     }
 </script>
 </body>
