@@ -17,7 +17,8 @@
         .action-area { padding: 15px; background: #f8fafc; display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #eee; position: relative; }
         .input-field { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-add { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+        .btn-add { background: var(--primary); color: white; flex-grow: 1; }
+        .btn-file { background: #64748b; color: white; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
@@ -26,8 +27,7 @@
         .bg-pending { background: #fef3c7; color: #92400e; }
         .bg-success { background: #d1fae5; color: #065f46; }
         .row-btn { background: #fff; border: 1px solid #ddd; padding: 5px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; margin: 2px; }
-        .no-print { display: none !important; }
-        @media print { .no-print-area { display: none !important; } }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -35,7 +35,7 @@
 <div class="dashboard">
     <div class="header-bar">
         <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <p>نظام الإدارة - وحدة التحكم الذكية</p>
+        <p>نظام الإدارة المتكامل</p>
     </div>
 
     <div class="stats">
@@ -44,9 +44,13 @@
         <div class="stat-card"> <p style="font-size:12px; margin:0;">مكتمل</p><span id="done" style="font-size:20px; font-weight:bold; color:green;">0</span> </div>
     </div>
 
-    <div class="action-area no-print-area">
+    <div class="action-area no-print">
         <input type="text" id="clientName" class="input-field" placeholder="اسم العميل...">
-        <button id="addBtn" class="btn btn-add" onclick="uploadData()">➕ إضافة العميل للجدول</button>
+        
+        <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileLabel').innerText='مختار: ' + this.files[0].name">
+        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">ارفق ملف PDF</span></button>
+        
+        <button id="addBtn" class="btn btn-add" onclick="uploadData()">➕ إضافة للجدول</button>
         <input type="text" id="search" style="width:100%; padding:8px; border:1px solid var(--primary); border-radius:6px; margin-top:5px;" onkeyup="filterTable()" placeholder="🔍 ابحث عن اسم...">
     </div>
 
@@ -55,9 +59,10 @@
             <thead>
                 <tr>
                     <th>العميل</th>
+                    <th>اسم الملف</th>
                     <th>الحالة</th>
                     <th>ملاحظة</th>
-                    <th class="no-print-area">إجراءات</th>
+                    <th class="no-print">إجراء</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -66,45 +71,49 @@
 </div>
 
 <script>
-    // إعدادات Firebase الخاصة بمشروعك
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
-        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com", // رابط قاعدة البيانات المفعلة
+        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
         projectId: "store-project-b023e",
         storageBucket: "store-project-b023e.firebasestorage.app",
         messagingSenderId: "561530737705",
         appId: "1:561530737705:web:beefb32c081f9bf8b53838"
     };
 
-    // تهيئة فيربيز
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // إضافة البيانات لـ Realtime Database
     async function uploadData() {
         const name = document.getElementById('clientName').value;
+        const file = document.getElementById('fileInput').files[0];
         const btn = document.getElementById('addBtn');
 
-        if(!name) return alert("يرجى إدخال اسم العميل");
+        if(!name) return alert("يرجى إدخال الاسم أولاً");
 
         btn.disabled = true;
         
         const newRef = db.ref('orders').push();
         await newRef.set({
             client: name,
+            fileName: file ? file.name : "لم يتم إرفاق ملف",
             status: 'pending',
             note: '',
             time: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
-            alert("تمت الإضافة بنجاح!");
-            document.getElementById('clientName').value = '';
+            alert("تم الإضافة بنجاح!");
+            resetUI();
         }).catch(err => alert("خطأ: " + err.message));
         
         btn.disabled = false;
     }
 
-    // عرض البيانات لحظياً
+    function resetUI() {
+        document.getElementById('clientName').value = '';
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileLabel').innerText = "ارفق ملف PDF";
+    }
+
     db.ref('orders').on('value', snap => {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -118,10 +127,11 @@
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${o.client}</strong></td>
+                    <td style="font-size:11px; color:#666;">${o.fileName}</td>
                     <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="toggleStatus('${id}','${o.status}')">${o.status==='pending'?'قيد التجهيز':'مكتمل'}</span></td>
                     <td><input type="text" value="${o.note || ''}" onblur="updateNote('${id}',this.value)" style="width:100px; border:none; border-bottom:1px solid #ccc; text-align:center;"></td>
-                    <td class="no-print-area">
-                        <button class="row-btn" style="color:red;" onclick="deleteDoc('${id}')">🗑️ حذف</button>
+                    <td class="no-print">
+                        <button class="row-btn" style="color:red;" onclick="deleteDoc('${id}')">🗑️</button>
                     </td>
                 </tr>
             `;
