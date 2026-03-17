@@ -2,120 +2,202 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة اسبيرات - تصدير التقارير</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة العمليات | شركة محمد طه</title>
     <style>
-        :root { --odoo-main: #714B67; --odoo-secondary: #00A09D; --sidebar: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f8f9fa; height: 100vh; overflow: hidden; }
-        .sidebar { width: 220px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; background: #1a252f; text-align: center; font-weight: bold; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .inventory-section { padding: 25px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        th { background: #f4f4f4; padding: 12px; text-align: right; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-add { background: var(--odoo-main); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        .btn-export { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 400px; }
-        .form-group { margin-bottom: 15px; text-align: right; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        body { user-select: none; }
+        :root {
+            --primary-color: #1e3a8a; /* أزرق ملكي مهني */
+            --secondary-color: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+        }
+
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; user-select: none; }
+        .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+        
+        /* الهيدر */
+        .header-bar { background: var(--primary-color); color: white; padding: 20px; text-align: center; }
+        .header-bar h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+
+        /* لوحة الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .stat-card { padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-card span { display: block; font-size: 20px; font-weight: bold; }
+
+        /* منطقة الإدخال المهنية */
+        .action-area { padding: 20px; background: #f1f5f9; display: flex; gap: 10px; flex-wrap: wrap; }
+        .input-field { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-main { background: var(--primary-color); color: white; }
+        .btn-main:hover { background: #1e40af; }
+
+        /* التبويبات */
+        .tab-container { padding: 0 20px; background: #fff; display: flex; border-bottom: 2px solid #f1f5f9; }
+        .tab { padding: 15px 25px; cursor: pointer; color: var(--secondary-color); font-weight: 500; border-bottom: 3px solid transparent; }
+        .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: #f8fafc; }
+
+        /* الجدول المهني */
+        .table-wrapper { padding: 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #f8fafc; padding: 15px; text-align: center; font-size: 13px; text-transform: uppercase; color: var(--secondary-color); border-bottom: 2px solid #e2e8f0; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .badge { padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .bg-pending { background: #fef3c7; color: #92400e; }
+        .bg-success { background: #d1fae5; color: #065f46; }
+        
+        .delete-icon { color: var(--danger); cursor: pointer; font-size: 18px; border: none; background: none; }
+        .delete-icon:hover { transform: scale(1.2); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<div class="sidebar">
-    <div class="sidebar-header">إدارة اسبيرات</div>
-    <div class="menu-item" style="padding:15px 20px;">لوحة المخزن</div>
-</div>
+<div class="dashboard">
+    <div class="header-bar">
+        <h1>شركة محمد طه لإدارة الخدمات</h1>
+        <small>نظام الأرشفة والطباعة المركزي - نسخة 2026</small>
+    </div>
 
-<div class="main-content">
-    <header>
-        <h3>نظام إدارة شركة اسبيرات - الإصدار التقني 1998</h3>
-        <span>المدير: محمد طه</span>
-    </header>
-
-    <div class="inventory-section">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center;">
-            <h4>قائمة المخزون الحالية</h4>
-            <div>
-                <button class="btn-export" onclick="exportToExcel()">تصدير إلى Excel</button>
-                <button class="btn-add" onclick="openModal()">+ إضافة قطعة</button>
-            </div>
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top: 4px solid var(--primary-color);">
+            <p>إجمالي المعاملات</p>
+            <span id="totalCount">0</span>
         </div>
-        
-        <table id="partsTable">
+        <div class="stat-card" style="border-top: 4px solid var(--warning);">
+            <p>قيد التجهيز</p>
+            <span id="pendingCount">0</span>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid var(--success);">
+            <p>تمت الطباعة</p>
+            <span id="doneCount">0</span>
+        </div>
+    </div>
+
+    <div class="action-area">
+        <input type="text" id="client" class="input-field" placeholder="اسم العميل الكامل">
+        <input type="text" id="file" class="input-field" placeholder="وصف الملف (مثلاً: فاتورة ضريبية)">
+        <button class="btn btn-main" onclick="addEntry()">إضافة للسجل</button>
+    </div>
+
+    <div class="tab-container">
+        <div class="tab active" onclick="filterData('all', this)">كل السجلات</div>
+        <div class="tab" onclick="filterData('pending', this)">بانتظار الطباعة</div>
+        <div class="tab" onclick="filterData('done', this)">سجل المطبوعات</div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
             <thead>
                 <tr>
-                    <th>اسم القطعة</th>
-                    <th>الكمية</th>
-                    <th>السعر</th>
-                    <th>كود التوثيق</th>
+                    <th>ID</th>
+                    <th>توقيت الطلب</th>
+                    <th>اسم العميل</th>
+                    <th>مسمى الملف</th>
+                    <th>الحالة التشغيلية</th>
+                    <th>الإجراء</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>مساعد أمامي لاندكروزر</td>
-                    <td>25</td>
-                    <td>500</td>
-                    <td>ASP-1998-001</td>
-                </tr>
-                <tr>
-                    <td>طقم فلاتر نيسان</td>
-                    <td>10</td>
-                    <td>150</td>
-                    <td>ASP-1998-002</td>
-                </tr>
-            </tbody>
+            <tbody id="masterTable">
+                </tbody>
         </table>
     </div>
 </div>
 
-<div id="addModal" class="modal">
-    <div class="modal-content">
-        <h3>إضافة قطعة لشركة اسبيرات</h3>
-        <hr>
-        <div class="form-group"><label>الاسم:</label><input type="text" id="pName"></div>
-        <div class="form-group"><label>الكمية:</label><input type="number" id="pQty"></div>
-        <div class="form-group"><label>السعر:</label><input type="number" id="pPrice"></div>
-        <button class="btn-add" style="width:100%;" onclick="savePart()">حفظ</button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer;">إلغاء</button>
-    </div>
-</div>
-
 <script>
-    function openModal() { document.getElementById('addModal').style.display = 'block'; }
-    function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+    let entries = [];
+    const _SYS_KEY = "MT-1998";
 
-    let partCounter = 3;
-    function savePart() {
-        const name = document.getElementById('pName').value;
-        const qty = document.getElementById('pQty').value;
-        const price = document.getElementById('pPrice').value;
+    function addEntry() {
+        const client = document.getElementById('client').value;
+        const file = document.getElementById('file').value;
+        
+        if (!client || !file) {
+            alert("تنبيه مهني: يرجى استكمال بيانات العميل والملف.");
+            return;
+        }
 
-        if(name && qty && price) {
-            const table = document.getElementById('partsTable').getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
-            newRow.innerHTML = `<td>${name}</td><td>${qty}</td><td>${price}</td><td>ASP-1998-00${partCounter++}</td>`;
-            closeModal();
-            document.querySelectorAll('.modal-content input').forEach(i => i.value = '');
+        const newEntry = {
+            id: entries.length + 1,
+            time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
+            date: new Date().toLocaleDateString('ar-EG'),
+            client: client,
+            file: file,
+            status: 'pending'
+        };
+
+        entries.unshift(newEntry);
+        updateUI();
+        document.getElementById('client').value = '';
+        document.getElementById('file').value = '';
+    }
+
+    function updateUI() {
+        const tbody = document.getElementById('masterTable');
+        tbody.innerHTML = '';
+
+        entries.forEach(item => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', item.id);
+            row.innerHTML = `
+                <td>#${item.id}</td>
+                <td><small>${item.date}<br>${item.time}</small></td>
+                <td><strong>${item.client}</strong></td>
+                <td>📄 ${item.file}</td>
+                <td>
+                    <span class="badge ${item.status === 'pending' ? 'bg-pending' : 'bg-success'}" 
+                          onclick="toggleEntryStatus(${item.id})">
+                        ${item.status === 'pending' ? 'قيد التجهيز' : 'تمت الطباعة'}
+                    </span>
+                </td>
+                <td><button class="delete-icon" onclick="removeEntry(${item.id})">🗑</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // تحديث العدادات
+        document.getElementById('totalCount').innerText = entries.length;
+        document.getElementById('pendingCount').innerText = entries.filter(e => e.status === 'pending').length;
+        document.getElementById('doneCount').innerText = entries.filter(e => e.status === 'done').length;
+    }
+
+    function toggleEntryStatus(id) {
+        const item = entries.find(e => e.id === id);
+        if (item) {
+            item.status = item.status === 'pending' ? 'done' : 'pending';
+            updateUI();
         }
     }
 
-    // الطريقة الجديدة: تصدير البيانات لملف Excel
-    function exportToExcel() {
-        const table = document.getElementById("partsTable");
-        const wb = XLSX.utils.table_to_book(table, {sheet: "مخزن اسبيرات"});
-        XLSX.writeFile(wb, "تقرير_مخزن_اسبيرات_1998.xlsx");
-        alert("تم تجهيز التقرير وتحميله بنجاح.");
+    function removeEntry(id) {
+        if(confirm("إجراء إداري: هل أنت متأكد من حذف هذا السجل؟")) {
+            entries = entries.filter(e => e.id !== id);
+            updateUI();
+        }
     }
 
-    // الحماية
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
+    function filterData(status, tabEl) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tabEl.classList.add('active');
+        
+        const rows = document.querySelectorAll('#masterTable tr');
+        rows.forEach(row => {
+            const id = parseInt(row.getAttribute('data-id'));
+            const item = entries.find(e => e.id === id);
+            if (status === 'all' || item.status === status) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // منع اختصارات المطورين
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false;
+    };
 </script>
 
 </body>
