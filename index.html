@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شركة محمد طه لإدارة الخدمات</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
         :root { --primary: #1e3a8a; --accent: #3b82f6; --success: #10b981; }
@@ -18,23 +17,17 @@
         .action-area { padding: 15px; background: #f8fafc; display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid #eee; position: relative; }
         .input-field { flex: 1; min-width: 200px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-add { background: var(--primary); color: white; }
-        .btn-file { background: #64748b; color: white; }
+        .btn-add { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
         
-        /* شريط التقدم ✅ */
-        #progressContainer { width: 100%; height: 5px; background: #eee; display: none; margin-top: 5px; border-radius: 10px; overflow: hidden; }
-        #progressBar { width: 0%; height: 100%; background: var(--success); transition: width 0.3s; }
-        #progressText { font-size: 11px; color: var(--success); display: none; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
         th { background: #f8fafc; color: #475569; font-size: 13px; }
         .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; }
         .bg-pending { background: #fef3c7; color: #92400e; }
         .bg-success { background: #d1fae5; color: #065f46; }
         .row-btn { background: #fff; border: 1px solid #ddd; padding: 5px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; margin: 2px; }
-        #printFrame { display: none; }
-        @media print { .no-print { display: none !important; } }
+        .no-print { display: none !important; }
+        @media print { .no-print-area { display: none !important; } }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -42,7 +35,7 @@
 <div class="dashboard">
     <div class="header-bar">
         <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <p>نظام الرفع الذكي وتتبع التقدم</p>
+        <p>نظام الإدارة - وحدة التحكم الذكية</p>
     </div>
 
     <div class="stats">
@@ -51,15 +44,9 @@
         <div class="stat-card"> <p style="font-size:12px; margin:0;">مكتمل</p><span id="done" style="font-size:20px; font-weight:bold; color:green;">0</span> </div>
     </div>
 
-    <div class="action-area no-print">
+    <div class="action-area no-print-area">
         <input type="text" id="clientName" class="input-field" placeholder="اسم العميل...">
-        <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileLabel').innerText='تم اختيار: ' + this.files[0].name">
-        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">ارفق ملف PDF</span></button>
-        <button id="addBtn" class="btn btn-add" onclick="uploadData()">➕ إضافة للجدول</button>
-        
-        <div id="progressContainer"><div id="progressBar"></div></div>
-        <span id="progressText">جاري الرفع: 0%</span>
-
+        <button id="addBtn" class="btn btn-add" onclick="uploadData()">➕ إضافة العميل للجدول</button>
         <input type="text" id="search" style="width:100%; padding:8px; border:1px solid var(--primary); border-radius:6px; margin-top:5px;" onkeyup="filterTable()" placeholder="🔍 ابحث عن اسم...">
     </div>
 
@@ -68,11 +55,9 @@
             <thead>
                 <tr>
                     <th>العميل</th>
-                    <th>الملف المرفق</th>
-                    <th>طباعة ✅</th>
                     <th>الحالة</th>
                     <th>ملاحظة</th>
-                    <th class="no-print">حذف</th>
+                    <th class="no-print-area">إجراءات</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -80,94 +65,64 @@
     </div>
 </div>
 
-<iframe id="printFrame"></iframe>
-
 <script>
+    // إعدادات Firebase الخاصة بمشروعك
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
+        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com", // رابط قاعدة البيانات المفعلة
         projectId: "store-project-b023e",
         storageBucket: "store-project-b023e.firebasestorage.app",
         messagingSenderId: "561530737705",
         appId: "1:561530737705:web:beefb32c081f9bf8b53838"
     };
 
+    // تهيئة فيربيز
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+    const db = firebase.database();
 
-    // وظيفة الرفع مع حساب النسبة المئوية ✅
+    // إضافة البيانات لـ Realtime Database
     async function uploadData() {
         const name = document.getElementById('clientName').value;
-        const file = document.getElementById('fileInput').files[0];
         const btn = document.getElementById('addBtn');
-        const pContainer = document.getElementById('progressContainer');
-        const pBar = document.getElementById('progressBar');
-        const pText = document.getElementById('progressText');
 
-        if(!name || !file) return alert("يرجى إدخال الاسم وإرفاق الملف");
+        if(!name) return alert("يرجى إدخال اسم العميل");
 
         btn.disabled = true;
-        pContainer.style.display = 'block';
-        pText.style.display = 'inline';
-
-        // بدء مهمة الرفع مع مراقب الحالة
-        const ref = storage.ref('taha_files/' + Date.now() + "_" + file.name);
-        const uploadTask = ref.put(file);
-
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                // حساب النسبة المئوية اللحظية
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                pBar.style.width = progress + '%';
-                pText.innerText = 'جاري الرفع: ' + Math.round(progress) + '%';
-            }, 
-            (error) => { alert("خطأ في الرفع"); resetUI(); }, 
-            async () => {
-                // عند اكتمال الرفع بنجاح
-                const url = await uploadTask.snapshot.ref.getDownloadURL();
-                await db.collection('orders').add({
-                    client: name,
-                    fileName: file.name,
-                    fileURL: url,
-                    status: 'pending',
-                    note: '',
-                    time: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                resetUI();
-            }
-        );
+        
+        const newRef = db.ref('orders').push();
+        await newRef.set({
+            client: name,
+            status: 'pending',
+            note: '',
+            time: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            alert("تمت الإضافة بنجاح!");
+            document.getElementById('clientName').value = '';
+        }).catch(err => alert("خطأ: " + err.message));
+        
+        btn.disabled = false;
     }
 
-    function resetUI() {
-        document.getElementById('addBtn').disabled = false;
-        document.getElementById('progressContainer').style.display = 'none';
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressText').style.display = 'none';
-        document.getElementById('clientName').value = '';
-        document.getElementById('fileInput').value = '';
-        document.getElementById('fileLabel').innerText = "ارفق ملف PDF";
-    }
-
-    // عرض البيانات والطباعة من الجدول
-    db.collection('orders').orderBy('time', 'desc').onSnapshot(snap => {
+    // عرض البيانات لحظياً
+    db.ref('orders').on('value', snap => {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         let t=0, p=0, d=0;
-        snap.forEach(doc => {
-            const o = doc.data();
+        
+        snap.forEach(child => {
+            const id = child.key;
+            const o = child.val();
             t++; o.status === 'pending' ? p++ : d++;
+            
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${o.client}</strong></td>
-                    <td style="font-size:11px;">${o.fileName}</td>
-                    <td>
-                        <button class="row-btn" style="border-color:var(--primary); color:var(--primary);" onclick="directPrint('${o.fileURL}')">🖨️ طباعة</button>
-                        <button class="row-btn" onclick="window.open('${o.fileURL}')">👁️ فتح</button>
+                    <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="toggleStatus('${id}','${o.status}')">${o.status==='pending'?'قيد التجهيز':'مكتمل'}</span></td>
+                    <td><input type="text" value="${o.note || ''}" onblur="updateNote('${id}',this.value)" style="width:100px; border:none; border-bottom:1px solid #ccc; text-align:center;"></td>
+                    <td class="no-print-area">
+                        <button class="row-btn" style="color:red;" onclick="deleteDoc('${id}')">🗑️ حذف</button>
                     </td>
-                    <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="toggleStatus('${doc.id}','${o.status}')">${o.status==='pending'?'قيد التجهيز':'مكتمل'}</span></td>
-                    <td><input type="text" value="${o.note}" onchange="updateNote('${doc.id}',this.value)" style="width:70px; border:none; border-bottom:1px solid #ccc;"></td>
-                    <td class="no-print"><button class="row-btn" style="color:red;" onclick="deleteDoc('${doc.id}')">🗑️</button></td>
                 </tr>
             `;
         });
@@ -176,18 +131,9 @@
         document.getElementById('done').innerText = d;
     });
 
-    function directPrint(url) {
-        const frame = document.getElementById('printFrame');
-        frame.src = url;
-        frame.onload = function() {
-            frame.contentWindow.focus();
-            frame.contentWindow.print();
-        };
-    }
-
-    function toggleStatus(id, s) { db.collection('orders').doc(id).update({ status: s==='pending'?'done':'pending' }); }
-    function updateNote(id, v) { db.collection('orders').doc(id).update({ note: v }); }
-    function deleteDoc(id) { if(confirm("حذف؟")) db.collection('orders').doc(id).delete(); }
+    function toggleStatus(id, s) { db.ref('orders/' + id).update({ status: s==='pending'?'done':'pending' }); }
+    function updateNote(id, v) { db.ref('orders/' + id).update({ note: v }); }
+    function deleteDoc(id) { if(confirm("هل تريد الحذف؟")) db.ref('orders/' + id).remove(); }
     function filterTable() {
         let q = document.getElementById('search').value.toLowerCase();
         document.querySelectorAll('#tableBody tr').forEach(tr => tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none');
