@@ -3,31 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة محمد طه لإدارة الخدمات - النظام السحابي</title>
+    <title>شركة محمد طه لإدارة الخدمات</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
 
     <style>
-        :root { --primary: #1e3a8a; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; direction: rtl; }
-        .dashboard { max-width: 1100px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
-        .header-bar { background: var(--primary); color: white; padding: 20px; text-align: center; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; border-bottom: 1px solid #eee; }
-        .stat-card { padding: 10px; text-align: center; border-radius: 8px; border: 1px solid #e2e8f0; border-top: 3px solid var(--primary); }
-        .stat-card span { display: block; font-size: 20px; font-weight: bold; }
-        .action-area { padding: 15px; background: #f1f5f9; display: flex; flex-wrap: wrap; gap: 10px; }
-        .input-field { flex: 2; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        :root { 
+            --primary: #1e3a8a; 
+            --accent: #3b82f6;
+            --success: #10b981; 
+            --warning: #f59e0b; 
+            --danger: #ef4444;
+            --light: #f8fafc;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e2e8f0; margin: 0; padding: 15px; direction: rtl; }
+        
+        .dashboard { max-width: 1200px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; }
+        
+        /* الهيدر المحسن */
+        .header-bar { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 25px; text-align: center; }
+        .header-bar h1 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+        .header-bar p { margin: 8px 0 0; font-size: 13px; opacity: 0.9; }
+
+        /* كروت الإحصائيات */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; background: #fff; }
+        .stat-card { padding: 15px; text-align: center; border-radius: 12px; border: 1px solid #edf2f7; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .stat-card p { margin: 0; font-size: 12px; color: #64748b; font-weight: bold; }
+        .stat-card span { display: block; font-size: 24px; font-weight: 800; color: var(--primary); margin-top: 5px; }
+
+        /* منطقة الإدخال */
+        .action-area { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 12px; }
+        .input-field { flex: 1; min-width: 250px; padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.3s; }
+        .input-field:focus { border-color: var(--accent); }
+        
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .btn-main { background: var(--primary); color: white; }
-        .tabs { display: flex; background: #fff; border-bottom: 2px solid #f1f5f9; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .badge { padding: 5px 10px; border-radius: 50px; font-size: 11px; cursor: pointer; }
-        .bg-pending { background: #fef3c7; color: #92400e; }
-        .bg-success { background: #d1fae5; color: #065f46; }
+        .btn-main:hover { background: #152e72; }
+        .btn-file { background: #64748b; color: white; }
+
+        /* الجدول */
+        .table-container { padding: 0 20px 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: center; padding: 15px; background: #f1f5f9; color: #475569; font-size: 13px; text-transform: uppercase; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; display: inline-block; }
+        .bg-pending { background: #ffedd5; color: #9a3412; }
+        .bg-success { background: #dcfce7; color: #166534; }
+
+        .row-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .row-btn:hover { background: #e2e8f0; }
+        .btn-delete { color: var(--danger); border-color: #fecaca; }
+
+        #printFrame { display: none; } /* إطار مخفي للطباعة */
+        
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
@@ -36,32 +67,38 @@
 <div class="dashboard">
     <div class="header-bar">
         <h1>شركة محمد طه لإدارة الخدمات</h1>
-        <p>النظام السحابي الموحد - الحفظ التلقائي مفعل ✅</p>
+        <p>بوابة إدارة العملاء والطباعة السحابية الذكية</p>
     </div>
 
     <div class="stats">
-        <div class="stat-card"> <p>إجمالي المعاملات</p><span id="total">0</span> </div>
-        <div class="stat-card" style="border-top-color: var(--warning);"> <p>قيد التجهيز</p><span id="pending">0</span> </div>
-        <div class="stat-card" style="border-top-color: var(--success);"> <p>تمت الطباعة</p><span id="done">0</span> </div>
+        <div class="stat-card" style="border-top: 4px solid var(--primary);">
+            <p>إجمالي الطلبات</p><span id="total">0</span>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid var(--warning);">
+            <p>قيد المعالجة</p><span id="pending">0</span>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid var(--success);">
+            <p>تم تسليمه</p><span id="done">0</span>
+        </div>
     </div>
 
     <div class="action-area no-print">
-        <input type="text" id="clientName" class="input-field" placeholder="اسم العميل الكامل">
+        <input type="text" id="clientName" class="input-field" placeholder="اسم العميل الرباعي...">
         <input type="file" id="fileInput" style="display:none" onchange="document.getElementById('fileLabel').innerText=this.files[0].name">
-        <button class="btn" style="background:#64748b; color:white;" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">ارفق ملف PDF</span></button>
-        <button id="addBtn" class="btn btn-main" onclick="uploadAndAdd()">🚀 تنفيذ الطلب</button>
-        <input type="text" id="search" style="width:100%; padding:8px;" onkeyup="filterTable()" placeholder="🔍 ابحث هنا...">
+        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📁 <span id="fileLabel">ارفق ملف PDF</span></button>
+        <button id="addBtn" class="btn btn-main" onclick="uploadAndSave()">✅ إرسال للطباعة</button>
+        <input type="text" id="search" class="input-field" style="width:100%; border-color: var(--primary);" onkeyup="filterTable()" placeholder="🔍 ابحث عن عميل بالاسم...">
     </div>
 
-    <div class="table-wrapper" style="overflow-x:auto;">
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
                     <th>اسم العميل</th>
-                    <th>الملف المرفوع</th>
-                    <th>الحالة</th>
+                    <th>الملف المرفق</th>
+                    <th>حالة الطلب</th>
                     <th>ملاحظات</th>
-                    <th class="no-print">إجراءات</th>
+                    <th class="no-print">التحكم</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -69,8 +106,10 @@
     </div>
 </div>
 
+<iframe id="printFrame"></iframe>
+
 <script>
-    // إعدادات Firebase الخاصة بك ✅
+    // إعدادات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
@@ -84,60 +123,60 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // رفع الملف وإضافة البيانات سحابياً
-    async function uploadAndAdd() {
+    // وظيفة الرفع والحفظ
+    async function uploadAndSave() {
         const name = document.getElementById('clientName').value;
         const file = document.getElementById('fileInput').files[0];
         const btn = document.getElementById('addBtn');
 
-        if(!name || !file) return alert("أكمل البيانات");
+        if(!name || !file) return alert("فضلاً أدخل الاسم وارفق الملف");
 
-        btn.innerText = "جاري الرفع...";
+        btn.innerText = "جاري المعالجة...";
         btn.disabled = true;
 
         try {
-            // 1. رفع الملف لـ Firebase Storage
-            const fileRef = storage.ref('files/' + Date.now() + "_" + file.name);
+            const fileRef = storage.ref('taha_files/' + Date.now() + "_" + file.name);
             await fileRef.put(file);
-            const fileURL = await fileRef.getDownloadURL();
+            const url = await fileRef.getDownloadURL();
 
-            // 2. حفظ البيانات في Firestore
             await db.collection('orders').add({
                 client: name,
                 fileName: file.name,
-                fileURL: fileURL,
+                fileURL: url,
                 status: 'pending',
                 note: '',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             document.getElementById('clientName').value = '';
             document.getElementById('fileInput').value = '';
             document.getElementById('fileLabel').innerText = "ارفق ملف PDF";
-        } catch (e) { alert("خطأ في الرفع: " + e.message); }
-        btn.innerText = "🚀 تنفيذ الطلب";
+        } catch (e) { alert("حدث خطأ: " + e.message); }
+        btn.innerText = "✅ إرسال للطباعة";
         btn.disabled = false;
     }
 
-    // جلب البيانات لحظياً (Real-time Sync)
-    db.collection('orders').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+    // تحديث الجدول لحظياً
+    db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snap => {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         let t=0, p=0, d=0;
 
-        snapshot.forEach(doc => {
-            const o = doc.data();
-            t++; o.status === 'pending' ? p++ : d++;
+        snap.forEach(doc => {
+            const data = doc.data();
+            t++; data.status === 'pending' ? p++ : d++;
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${o.client}</strong></td>
+                    <td><strong>${data.client}</strong></td>
                     <td>
-                        <button onclick="window.open('${o.fileURL}')">👁️ فتح</button>
-                        <button onclick="printPdf('${o.fileURL}')">🖨️ طباعة</button>
+                        <button class="row-btn" onclick="window.open('${data.fileURL}')">👁️ معاينة</button>
+                        <button class="row-btn" style="color:var(--primary)" onclick="directPrint('${data.fileURL}')">🖨️ طباعة الملف</button>
                     </td>
-                    <td><span class="badge ${o.status==='pending'?'bg-pending':'bg-success'}" onclick="updateStatus('${doc.id}', '${o.status}')">${o.status==='pending'?'قيد التجهيز':'تمت الطباعة'}</span></td>
-                    <td><input type="text" value="${o.note}" onchange="updateNote('${doc.id}', this.value)" style="border:none; border-bottom:1px solid #ddd; width:80px;"></td>
-                    <td class="no-print"><button onclick="deleteDoc('${doc.id}')">🗑️</button></td>
+                    <td><span class="badge ${data.status==='pending'?'bg-pending':'bg-success'}" onclick="toggleStatus('${doc.id}', '${data.status}')">${data.status==='pending'?'قيد التجهيز':'تمت الطباعة'}</span></td>
+                    <td><input type="text" class="input-field" style="width:120px; padding:5px; font-size:12px;" value="${data.note}" onchange="updateNote('${doc.id}', this.value)"></td>
+                    <td class="no-print">
+                        <button class="row-btn btn-delete" onclick="deleteOrder('${doc.id}')">🗑️ حذف</button>
+                    </td>
                 </tr>
             `;
         });
@@ -146,7 +185,17 @@
         document.getElementById('done').innerText = d;
     });
 
-    function updateStatus(id, current) {
+    // الوظيفة السحرية للطباعة الفعلية للملف المرفوع ✅
+    function directPrint(url) {
+        const frame = document.getElementById('printFrame');
+        frame.src = url;
+        frame.onload = function() {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+        };
+    }
+
+    function toggleStatus(id, current) {
         db.collection('orders').doc(id).update({ status: current === 'pending' ? 'done' : 'pending' });
     }
 
@@ -154,21 +203,19 @@
         db.collection('orders').doc(id).update({ note: val });
     }
 
-    function deleteDoc(id) {
-        if(confirm("حذف الطلب نهائياً؟")) db.collection('orders').doc(id).delete();
-    }
-
-    function printPdf(url) {
-        const win = window.open(url);
-        win.onload = () => win.print();
+    function deleteOrder(id) {
+        if(confirm("هل أنت متأكد من حذف هذا السجل؟")) db.collection('orders').doc(id).delete();
     }
 
     function filterTable() {
-        let v = document.getElementById('search').value.toLowerCase();
+        let q = document.getElementById('search').value.toLowerCase();
         document.querySelectorAll('#tableBody tr').forEach(tr => {
-            tr.style.display = tr.innerText.toLowerCase().includes(v) ? '' : 'none';
+            tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
         });
     }
+
+    // منع فتح السورس كود
+    document.onkeydown = (e) => { if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false; };
 </script>
 </body>
 </html>
