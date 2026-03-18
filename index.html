@@ -2,12 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>شركة محمد طه لإدارة الخدمات</title>
+    <title>نظام إدارة الخدمات - نسخة المتدربين</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --primary: #1e3a8a; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; direction: rtl; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; direction: rtl; }
         .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .header { text-align: center; color: var(--primary); border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
         .input-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
@@ -18,34 +18,41 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
         th { background-color: #f1f5f9; color: #475569; }
-        .print-btn { background-color: white; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; border-radius: 5px; }
-        #progBox { width: 100%; height: 8px; background: #eee; display: none; border-radius: 4px; margin-top: 10px; }
-        #progBar { width: 0%; height: 100%; background: #10b981; border-radius: 4px; transition: 0.3s; }
+        .print-btn { background-color: white; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; border-radius: 5px; cursor: pointer; }
+        .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 1.2em; }
+        #loader { display: none; color: #1e3a8a; font-weight: bold; margin-bottom: 10px; }
     </style>
+    <script>
+        // حماية الكود المصدري ومنع النسخ أيها المتدربون
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && e.keyCode == 85)) return false;
+        };
+    </script>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
         <h2>نظام إدارة الخدمات والطباعة</h2>
-        <p>بإشراف المهندس محمد طه عطا المنان</p>
+        <p>مرحباً بكم أيها المتدربون في واجهة التحكم المباشرة</p>
     </div>
 
     <div class="input-group">
         <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
         <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="document.getElementById('fileLabel').innerText=this.files[0].name">
-        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">اختيار PDF</span></button>
+        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">اختيار ملف PDF</span></button>
         <button id="mainBtn" class="btn btn-upload" onclick="processOrder()">🚀 رفع وطباعة</button>
-        <div id="progBox"><div id="progBar"></div></div>
     </div>
+    <div id="loader">جاري الرفع والمعالجة، يرجى الانتظار أيها المتدربون...</div>
 
     <table>
         <thead>
             <tr>
-                <th>العميل</th>
-                <th>الإجراء</th>
-                <th>الحالة</th>
-                <th>حذف</th>
+                <th>اسم العميل</th>
+                <th>إجراء الطباعة</th>
+                <th>حالة الطلب</th>
+                <th>إزالة</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
@@ -55,7 +62,7 @@
 <iframe id="printFrame" style="display:none"></iframe>
 
 <script>
-    // إعدادات Firebase الخاصة بك
+    // إعدادات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
@@ -66,25 +73,31 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // إعدادات Cloudinary الخاصة بك
+    // إعدادات Cloudinary (تأكد من مطابقة الصور السابقة أيها المتدربون)
     const CLOUD_NAME = "djygvtpb2"; 
     const UPLOAD_PRESET = "tahamm";
 
+    // وظيفة معالجة الطلب والرفع
     async function processOrder() {
         const file = document.getElementById('fileInput').files[0];
         const name = document.getElementById('clientName').value;
-        if(!file || !name) return alert("يرجى إكمال البيانات");
+        
+        if(!file || !name) {
+            return alert("الرجاء إكمال البيانات المطلوبة أيها المتدربون (الاسم والملف)");
+        }
 
         const btn = document.getElementById('mainBtn');
+        const loader = document.getElementById('loader');
+        
         btn.disabled = true;
-        document.getElementById('progBox').style.display = 'block';
+        loader.style.display = 'block';
 
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
 
         try {
-            // الرفع إلى Cloudinary لتجاوز قيود تخزين Firebase المجانية
+            // الرفع إلى سحابة Cloudinary
             const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
                 method: 'POST',
                 body: formData
@@ -92,29 +105,33 @@
             const data = await res.json();
             
             if (data.secure_url) {
-                // حفظ الرابط في Realtime Database
+                // حفظ البيانات في قاعدة Firebase
                 await db.ref('orders').push().set({
                     client: name,
                     fileURL: data.secure_url,
-                    status: 'pending'
+                    timestamp: Date.now()
                 });
                 resetUI();
+                alert("تم الرفع بنجاح أيها المتدربون!");
+            } else {
+                throw new Error("فشل الرفع");
             }
         } catch (e) {
-            alert("حدث خطأ، تأكد من الاتصال بالإنترنت");
+            alert("حدث خطأ أثناء الرفع، تأكدوا من إعدادات Cloudinary أيها المتدربون");
+            console.error(e);
+        } finally {
             btn.disabled = false;
+            loader.style.display = 'none';
         }
     }
 
     function resetUI() {
         document.getElementById('clientName').value = '';
         document.getElementById('fileInput').value = '';
-        document.getElementById('fileLabel').innerText = "اختيار PDF";
-        document.getElementById('mainBtn').disabled = false;
-        document.getElementById('progBox').style.display = 'none';
+        document.getElementById('fileLabel').innerText = "اختيار ملف PDF";
     }
 
-    // عرض البيانات تلقائياً
+    // جلب وعرض البيانات في الجدول تلقائياً
     db.ref('orders').on('value', snap => {
         const tbody = document.getElementById('dataTable');
         tbody.innerHTML = '';
@@ -123,18 +140,29 @@
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${item.client}</strong></td>
-                    <td><button class="print-btn" onclick="printDoc('${item.fileURL}')">🖨️ طباعة</button></td>
-                    <td><span style="color:orange">جاهز</span></td>
-                    <td><button onclick="db.ref('orders/${child.key}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
+                    <td><button class="print-btn" onclick="printDoc('${item.fileURL}')">🖨️ طباعة الآن</button></td>
+                    <td><span style="color:green">مكتمل أيها المتدربون</span></td>
+                    <td><button class="delete-btn" onclick="deleteOrder('${child.key}')">🗑️</button></td>
                 </tr>
             `;
         });
     });
 
+    // وظيفة حذف الطلب
+    function deleteOrder(id) {
+        if(confirm("هل أنتم متأكدون من حذف هذا الطلب أيها المتدربون؟")) {
+            db.ref('orders/' + id).remove();
+        }
+    }
+
+    // وظيفة الطباعة
     function printDoc(url) {
         const frame = document.getElementById('printFrame');
         frame.src = url;
-        frame.onload = () => { frame.contentWindow.print(); };
+        frame.onload = () => { 
+            frame.contentWindow.focus();
+            frame.contentWindow.print(); 
+        };
     }
 </script>
 </body>
