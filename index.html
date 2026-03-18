@@ -3,102 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة المتدربين لرفع الملفات</title>
+    <title>منصة المتدربين - مركز رفع الملفات</title>
     <style>
-        :root { --main-color: #3ecf8e; --bg-color: #f0f2f5; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; }
-        .upload-section { border: 2px dashed var(--main-color); padding: 20px; text-align: center; border-radius: 8px; background: #f9fffb; margin-bottom: 25px; }
-        button { background: var(--main-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
-        button:disabled { background: #ccc; }
+        :root { --primary: #3ecf8e; --dark: #1c1c1c; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .upload-card { background: #f9fffb; border: 2px dashed var(--primary); padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 30px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; }
+        button:hover { background: #34b27b; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
         #fileList { list-style: none; padding: 0; margin-top: 20px; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; background: #fff; margin-bottom: 5px; border-radius: 4px; }
-        .file-item a { color: #007bff; text-decoration: none; font-weight: bold; }
-        #status { font-size: 14px; margin-top: 10px; color: #666; }
+        .file-item { background: white; border: 1px solid #eee; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .download-btn { background: #007bff; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 13px; }
+        #status { margin-top: 10px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>مركز رفع ملفات المتدربين</h2>
+    <h2>منصة المتدربين لتبادل ملفات PDF</h2>
     
-    <div class="upload-section">
-        <input type="file" id="pdfFile" accept=".pdf">
+    <div class="upload-card">
+        <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 20px; display: block; width: 100%;">
         <button id="uploadBtn" onclick="uploadFile()">رفع الملف الآن</button>
         <div id="status"></div>
     </div>
 
-    <h3>الملفات المتاحة للجميع:</h3>
-    <div id="fileList">جاري تحميل القائمة...</div>
+    <h3>قائمة الملفات المرفوعة:</h3>
+    <div id="fileList">جاري التحميل...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-    // بيانات مشروعك (استبدل المفتاح العام فقط)
+    // بيانات الربط الخاصة بك (تم دمجها بنجاح)
     const SUPABASE_URL = 'https://hsqslvtoofhcuzxmswkh.supabase.co';
-    const SUPABASE_KEY = 'ضـع_مفـتاح_ANON_الخاص_بـك_هنـا'; 
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzcXNsdnRvb2ZoY3V6eG1zd2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTI3NzYsImV4cCI6MjA4OTM2ODc3Nn0.aHYycJNUXk4arZc0ktvbwcjT4kfwF-enUxnDsQr0S3M'; 
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // دالة لجلب الملفات وعرضها عند فتح الصفحة
     async function loadFiles() {
-        const { data, error } = await supabase.storage.from('pdfs').list();
         const listDiv = document.getElementById('fileList');
-        
+        const { data, error } = await supabaseClient.storage.from('pdfs').list('', {
+            sortBy: { column: 'created_at', order: 'desc' }
+        });
+
         if (error) {
-            listDiv.innerHTML = "خطأ في جلب الملفات. تأكد من إعداد الـ Policies.";
+            listDiv.innerHTML = "خطأ في الاتصال. تأكد من إعداد الـ Policies في Supabase.";
             return;
         }
 
         if (data.length === 0) {
-            listDiv.innerHTML = "لا توجد ملفات مرفوعة حالياً.";
+            listDiv.innerHTML = "لا توجد ملفات حالياً.";
             return;
         }
 
         listDiv.innerHTML = '';
         data.forEach(file => {
-            const { data: urlData } = supabase.storage.from('pdfs').getPublicUrl(file.name);
+            const { data: urlData } = supabaseClient.storage.from('pdfs').getPublicUrl(file.name);
             const item = document.createElement('div');
             item.className = 'file-item';
             item.innerHTML = `
-                <span>${file.name}</span>
-                <a href="${urlData.publicUrl}" target="_blank">تحميل PDF</a>
+                <div style="padding:10px">📄 ${file.name}</div>
+                <div style="padding:10px"><a href="${urlData.publicUrl}" target="_blank" class="download-btn">تحميل</a></div>
             `;
             listDiv.appendChild(item);
         });
     }
 
-    // دالة الرفع
     async function uploadFile() {
         const fileInput = document.getElementById('pdfFile');
         const btn = document.getElementById('uploadBtn');
         const status = document.getElementById('status');
         const file = fileInput.files[0];
 
-        if (!file) return alert("الرجاء اختيار ملف أولاً");
+        if (!file) return alert("اختر ملفاً أولاً");
 
         btn.disabled = true;
-        status.innerText = "جاري الرفع... يرجى الانتظار";
+        status.innerText = "جاري الرفع...";
 
-        // الرفع لمجلد pdfs
-        const { data, error } = await supabase.storage
-            .from('pdfs')
-            .upload(`${Date.now()}_${file.name}`, file);
+        const fileName = `${Date.now()}_${file.name}`;
+        const { error } = await supabaseClient.storage.from('pdfs').upload(fileName, file);
 
         if (error) {
             alert("فشل الرفع: " + error.message);
         } else {
+            status.style.color = "green";
             status.innerText = "تم الرفع بنجاح!";
-            loadFiles(); // تحديث القائمة فوراً
+            loadFiles();
         }
         btn.disabled = false;
         fileInput.value = '';
     }
 
-    // تشغيل الجلب عند فتح الصفحة
-    loadFiles();
+    window.onload = loadFiles;
 </script>
 
 </body>
