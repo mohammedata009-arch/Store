@@ -2,55 +2,45 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الخدمات - نسخة الدعم الفني</title>
+    <title>نظام إدارة الخدمات - فحص الأخطاء</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #1e3a8a; --bg: #f1f5f9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; direction: rtl; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        input[type="text"], .file-btn { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-main:disabled { background: #ccc; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: center; }
-        .preview-btn { background: #e0f2fe; color: #0369a1; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 1.2em; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding: 20px; direction: rtl; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .status-box { padding: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: bold; text-align: center; display: none; }
+        .error { background: #fee2e2; color: #b91c1c; display: block; }
+        .success { background: #dcfce7; color: #15803d; display: block; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-main { background: #1e3a8a; color: white; border: none; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h2>نظام إدارة الخدمات</h2>
-        <p>أيها المتدربون، يرجى ملء البيانات بدقة</p>
-    </div>
+    <h2>نظام إدارة الخدمات والطباعة</h2>
+    <p>أيها المتدربون، هذا الإصدار يحتوي على نظام "كشف الأعطال"</p>
+    
+    <div id="statusMsg" class="status-box"></div>
 
-    <div class="input-group">
-        <input type="text" id="clientName" placeholder="اسم العميل...">
-        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="document.getElementById('fileStatus').innerText = 'تم اختيار: ' + this.files[0].name">
-        <button class="file-btn" onclick="document.getElementById('fileInput').click()">📎 اختيار ملف PDF</button>
-        <span id="fileStatus" style="font-size: 0.8em; color: #666;">لم يتم اختيار ملف</span>
-        <button id="uploadBtn" class="btn-main" onclick="handleUpload()">🚀 رفع ومعالجة الآن</button>
-    </div>
+    <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
+    <input type="file" id="fileInput" accept="application/pdf">
+    <button id="uploadBtn" class="btn-main" onclick="startProfessionalUpload()">🚀 رفع ومعالجة الملف</button>
 
-    <table id="myTable">
+    <table id="dataTable" style="width: 100%; margin-top: 20px; border-collapse: collapse;">
         <thead>
-            <tr>
+            <tr style="background: #f8fafc;">
                 <th>العميل</th>
                 <th>المعاينة</th>
-                <th>حذف</th>
+                <th>الإجراء</th>
             </tr>
         </thead>
-        <tbody id="dataTable"></tbody>
+        <tbody id="listBody"></tbody>
     </table>
 </div>
 
 <script>
-    // إعدادات Firebase
+    // إعدادات Firebase الخاصة بكم
     const firebaseConfig = {
         apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
         authDomain: "store-project-b023e.firebaseapp.com",
@@ -61,69 +51,80 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // إعدادات Cloudinary
+    // إعدادات Cloudinary بناءً على صوركم
     const CLOUD_NAME = "djygvtpb2";
     const UPLOAD_PRESET = "tahamm";
 
-    async function handleUpload() {
+    async function startProfessionalUpload() {
         const file = document.getElementById('fileInput').files[0];
         const name = document.getElementById('clientName').value;
+        const msg = document.getElementById('statusMsg');
         const btn = document.getElementById('uploadBtn');
 
-        if (!file || !name) return alert("أيها المتدربون، أكملوا البيانات أولاً");
+        if (!file || !name) {
+            showStatus("يرجى إكمال البيانات أيها المتدربون", "error");
+            return;
+        }
 
         btn.disabled = true;
-        btn.innerText = "جاري المعالجة...";
+        showStatus("جاري الرفع... يرجى الانتظار", "success");
 
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
-        // نستخدم resource_type: 'auto' لضمان قبول الـ PDF
-        formData.append('resource_type', 'auto');
+        // هذا السطر يحل مشكلة ERR_INVALID_RESPONSE في الـ PDF
+        formData.append('resource_type', 'auto'); 
 
         try {
-            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+            // المرحلة الأولى: الرفع إلى Cloudinary
+            const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
                 method: 'POST',
                 body: formData
             });
+            const cloudData = await cloudRes.json();
 
-            const result = await response.json();
-
-            if (response.ok) {
-                // حفظ في فايربيس
-                await db.ref('orders').push({
-                    client: name,
-                    fileURL: result.secure_url,
-                    timestamp: Date.now()
-                });
-                alert("تم الرفع بنجاح أيها المتدربون");
-                location.reload();
-            } else {
-                console.error(result);
-                alert("خطأ من السحابة: " + (result.error ? result.error.message : "فشل الرفع"));
+            if (!cloudRes.ok) {
+                throw new Error("خطأ في Cloudinary: " + (cloudData.error.message || "فشل الرفع"));
             }
-        } catch (error) {
-            console.error(error);
-            alert("فشل الاتصال: تأكدوا من جودة الإنترنت أيها المتدربون");
+
+            // المرحلة الثانية: الحفظ في Firebase
+            await db.ref('orders').push({
+                client: name,
+                fileURL: cloudData.secure_url,
+                time: new Date().toLocaleTimeString()
+            });
+
+            showStatus("تمت العملية بنجاح تام أيها المتدربون", "success");
+            document.getElementById('fileInput').value = '';
+            document.getElementById('clientName').value = '';
+
+        } catch (err) {
+            showStatus("عذراً: " + err.message, "error");
+            console.error(err);
         } finally {
             btn.disabled = false;
-            btn.innerText = "🚀 رفع ومعالجة الآن";
         }
     }
 
-    // جلب البيانات
+    function showStatus(text, type) {
+        const msg = document.getElementById('statusMsg');
+        msg.innerText = text;
+        msg.className = "status-box " + type;
+        msg.style.display = "block";
+    }
+
+    // عرض البيانات من قاعدة البيانات
     db.ref('orders').on('value', snap => {
-        const tbody = document.getElementById('dataTable');
+        const tbody = document.getElementById('listBody');
         tbody.innerHTML = '';
         snap.forEach(child => {
             const data = child.val();
             tbody.innerHTML += `
-                <tr>
-                    <td>${data.client}</td>
-                    <td><button class="preview-btn" onclick="window.open('${data.fileURL}', '_blank')">👁️ فتح</button></td>
-                    <td><button class="delete-btn" onclick="db.ref('orders/${child.key}').remove()">🗑️</button></td>
-                </tr>
-            `;
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding:10px;">${data.client}</td>
+                    <td><a href="${data.fileURL}" target="_blank" style="color:#2563eb;">👁️ فتح</a></td>
+                    <td><button onclick="db.ref('orders/${child.key}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
+                </tr>`;
         });
     });
 </script>
