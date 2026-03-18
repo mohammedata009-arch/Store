@@ -1,132 +1,218 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>نظام إدارة الخدمات - فحص الأخطاء</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding: 20px; direction: rtl; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .status-box { padding: 10px; margin-bottom: 20px; border-radius: 8px; font-weight: bold; text-align: center; display: none; }
-        .error { background: #fee2e2; color: #b91c1c; display: block; }
-        .success { background: #dcfce7; color: #15803d; display: block; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn-main { background: #1e3a8a; color: white; border: none; cursor: pointer; font-size: 16px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>نظام إدارة الملفات الاحترافي</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    background: linear-gradient(135deg,#e0f2fe,#f8fafc);
+    padding: 20px;
+}
+
+.main-card {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+h1 { text-align:center; color:#1e3a8a; }
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input {
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+}
+
+button {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover { background:#1d4ed8; }
+
+.search {
+    margin-top:20px;
+    width:100%;
+}
+
+table {
+    width:100%;
+    margin-top:20px;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align:center;
+}
+
+.file-link {
+    display:inline-block;
+    margin:3px;
+    padding:6px 10px;
+    background:#eff6ff;
+    border-radius:6px;
+    text-decoration:none;
+    color:#2563eb;
+    font-weight:bold;
+}
+
+.delete-btn {
+    background:none;
+    border:none;
+    color:red;
+    font-size:18px;
+    cursor:pointer;
+}
+</style>
 </head>
+
 <body>
 
-<div class="container">
-    <h2>نظام إدارة الخدمات والطباعة</h2>
-    <p>أيها المتدربون، هذا الإصدار يحتوي على نظام "كشف الأعطال"</p>
-    
-    <div id="statusMsg" class="status-box"></div>
+<div class="main-card">
 
-    <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
+<h1>📂 مركز إدارة الملفات</h1>
+
+<div class="input-group">
+    <input type="text" id="clientName" placeholder="اسم العميل">
     <input type="file" id="fileInput" accept="application/pdf">
-    <button id="uploadBtn" class="btn-main" onclick="startProfessionalUpload()">🚀 رفع ومعالجة الملف</button>
+    <button onclick="uploadSystem()">🚀 رفع الملف</button>
+</div>
 
-    <table id="dataTable" style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-        <thead>
-            <tr style="background: #f8fafc;">
-                <th>العميل</th>
-                <th>المعاينة</th>
-                <th>الإجراء</th>
-            </tr>
-        </thead>
-        <tbody id="listBody"></tbody>
-    </table>
+<input type="text" id="searchInput" class="search" placeholder="🔍 ابحث عن عميل...">
+
+<table>
+<thead>
+<tr>
+<th>العميل</th>
+<th>الملف</th>
+<th>التاريخ</th>
+<th>حذف</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+</table>
+
 </div>
 
 <script>
-    // إعدادات Firebase الخاصة بكم
-    const firebaseConfig = {
-        apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
-        authDomain: "store-project-b023e.firebaseapp.com",
-        databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-        projectId: "store-project-b023e",
-        appId: "1:561530737705:web:beefb32c081f9bf8b53838"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+// Firebase
+const firebaseConfig = {
+apiKey: "YOUR_KEY",
+authDomain: "YOUR_DOMAIN",
+databaseURL: "YOUR_DB",
+projectId: "YOUR_ID",
+appId: "YOUR_APP"
+};
 
-    // إعدادات Cloudinary بناءً على صوركم
-    const CLOUD_NAME = "djygvtpb2";
-    const UPLOAD_PRESET = "tahamm";
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    async function startProfessionalUpload() {
-        const file = document.getElementById('fileInput').files[0];
-        const name = document.getElementById('clientName').value;
-        const msg = document.getElementById('statusMsg');
-        const btn = document.getElementById('uploadBtn');
+// Cloudinary
+const CLOUD_NAME = "djygvtpb2";
+const UPLOAD_PRESET = "tahamm";
 
-        if (!file || !name) {
-            showStatus("يرجى إكمال البيانات أيها المتدربون", "error");
-            return;
-        }
+// رفع الملف
+async function uploadSystem() {
 
-        btn.disabled = true;
-        showStatus("جاري الرفع... يرجى الانتظار", "success");
+let file = fileInput.files[0];
+let name = clientName.value;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-        // هذا السطر يحل مشكلة ERR_INVALID_RESPONSE في الـ PDF
-        formData.append('resource_type', 'auto'); 
+if(!file || !name) return alert("املأ البيانات");
 
-        try {
-            // المرحلة الأولى: الرفع إلى Cloudinary
-            const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            const cloudData = await cloudRes.json();
+let formData = new FormData();
+formData.append('file', file);
+formData.append('upload_preset', UPLOAD_PRESET);
 
-            if (!cloudRes.ok) {
-                throw new Error("خطأ في Cloudinary: " + (cloudData.error.message || "فشل الرفع"));
-            }
+let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+method:"POST",
+body:formData
+});
 
-            // المرحلة الثانية: الحفظ في Firebase
-            await db.ref('orders').push({
-                client: name,
-                fileURL: cloudData.secure_url,
-                time: new Date().toLocaleTimeString()
-            });
+let data = await res.json();
 
-            showStatus("تمت العملية بنجاح تام أيها المتدربون", "success");
-            document.getElementById('fileInput').value = '';
-            document.getElementById('clientName').value = '';
+await db.ref("orders").push({
+client:name,
+fileURL:data.secure_url,
+time:new Date().toLocaleString()
+});
 
-        } catch (err) {
-            showStatus("عذراً: " + err.message, "error");
-            console.error(err);
-        } finally {
-            btn.disabled = false;
-        }
-    }
+clientName.value="";
+fileInput.value="";
+}
 
-    function showStatus(text, type) {
-        const msg = document.getElementById('statusMsg');
-        msg.innerText = text;
-        msg.className = "status-box " + type;
-        msg.style.display = "block";
-    }
+// عرض البيانات
+let allData = [];
 
-    // عرض البيانات من قاعدة البيانات
-    db.ref('orders').on('value', snap => {
-        const tbody = document.getElementById('listBody');
-        tbody.innerHTML = '';
-        snap.forEach(child => {
-            const data = child.val();
-            tbody.innerHTML += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding:10px;">${data.client}</td>
-                    <td><a href="${data.fileURL}" target="_blank" style="color:#2563eb;">👁️ فتح</a></td>
-                    <td><button onclick="db.ref('orders/${child.key}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
-                </tr>`;
-        });
-    });
+db.ref("orders").on("value", snap=>{
+allData = [];
+snap.forEach(child=>{
+allData.push({id:child.key,...child.val()});
+});
+render(allData.reverse());
+});
+
+// عرض الجدول
+function render(data){
+let tbody = document.getElementById("tableBody");
+tbody.innerHTML="";
+
+data.forEach(d=>{
+tbody.innerHTML += `
+<tr>
+<td>${d.client}</td>
+
+<td>
+<a href="${d.fileURL}" target="_blank" class="file-link">فتح</a>
+<a href="${d.fileURL}" download="${d.client}.pdf" class="file-link">تحميل</a>
+</td>
+
+<td>${d.time}</td>
+
+<td>
+<button class="delete-btn" onclick="deleteItem('${d.id}')">🗑️</button>
+</td>
+</tr>
+`;
+});
+}
+
+// حذف
+function deleteItem(id){
+db.ref("orders/"+id).remove();
+}
+
+// البحث
+searchInput.addEventListener("input", ()=>{
+let val = searchInput.value.toLowerCase();
+let filtered = allData.filter(d=>d.client.toLowerCase().includes(val));
+render(filtered);
+});
+
 </script>
+
 </body>
 </html>
