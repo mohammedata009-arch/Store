@@ -3,77 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الخدمات - نسخة مفتوحة</title>
+    <title>نظام الخدمات - نسخة الدعم الفني</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #1e3a8a; --accent: #0ea5e9; --bg: #f1f5f9; }
+        :root { --primary: #1e3a8a; --bg: #f1f5f9; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; direction: rtl; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-        .header { text-align: center; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px; padding-bottom: 15px; }
-        .header h2 { color: var(--primary); margin: 0; }
-        
-        #statusModal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; 
-        }
-        .modal-content { 
-            background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; 
-            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-        }
-        
-        .input-group { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 25px; }
-        input[type="text"] { flex: 2; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; width: 100%; }
-        .btn { padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn-upload { background-color: var(--primary); color: white; }
-        .btn-file { background-color: #64748b; color: white; }
-        
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        input[type="text"], .file-btn { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-main:disabled { background: #ccc; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        th { background-color: #f8fafc; color: #64748b; font-weight: 600; }
-        
-        .action-link { 
-            display: inline-block; padding: 8px 16px; background: #e0f2fe; color: #0369a1; 
-            text-decoration: none; border-radius: 8px; font-weight: bold; cursor: pointer; border: none;
-        }
-        .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 1.3em; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: center; }
+        .preview-btn { background: #e0f2fe; color: #0369a1; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h2>نظام إدارة الخدمات والطباعة</h2>
-        <p>أيها المتدربون، النظام متاح الآن للاستخدام المباشر</p>
+        <h2>نظام إدارة الخدمات</h2>
+        <p>أيها المتدربون، يرجى ملء البيانات بدقة</p>
     </div>
 
     <div class="input-group">
-        <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
-        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="updateFileName()">
-        <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">اختيار ملف PDF</span></button>
-        <button id="mainBtn" class="btn btn-upload" onclick="processOrder()">🚀 رفع ومعالجة الملف</button>
+        <input type="text" id="clientName" placeholder="اسم العميل...">
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="document.getElementById('fileStatus').innerText = 'تم اختيار: ' + this.files[0].name">
+        <button class="file-btn" onclick="document.getElementById('fileInput').click()">📎 اختيار ملف PDF</button>
+        <span id="fileStatus" style="font-size: 0.8em; color: #666;">لم يتم اختيار ملف</span>
+        <button id="uploadBtn" class="btn-main" onclick="handleUpload()">🚀 رفع ومعالجة الآن</button>
     </div>
 
-    <table>
+    <table id="myTable">
         <thead>
             <tr>
-                <th>اسم العميل</th>
-                <th>إدارة الملف</th>
-                <th>إجراء</th>
+                <th>العميل</th>
+                <th>المعاينة</th>
+                <th>حذف</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
     </table>
-</div>
-
-<div id="statusModal">
-    <div class="modal-content">
-        <h3 style="color: var(--primary);">معاينة وتخزين الملف</h3>
-        <p style="font-size: 0.9em; color: #475569;">أيها المتدربون، الملف جاهز الآن للعرض.</p>
-        <div id="modalInfo" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-size: 0.8em; color: #0369a1; direction: ltr;"></div>
-        <button class="btn btn-upload" style="width: 100%;" onclick="openAndClose()">فتح المعاينة والطباعة</button>
-        <button class="btn" style="margin-top: 10px; color: #64748b;" onclick="closeModal()">إلغاء</button>
-    </div>
 </div>
 
 <script>
@@ -88,85 +61,71 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const CLOUD_NAME = "djygvtpb2"; 
+    // إعدادات Cloudinary
+    const CLOUD_NAME = "djygvtpb2";
     const UPLOAD_PRESET = "tahamm";
-    let currentFileUrl = "";
 
-    function updateFileName() {
-        const file = document.getElementById('fileInput').files[0];
-        if(file) document.getElementById('fileLabel').innerText = "تم اختيار: " + file.name;
-    }
-
-    async function processOrder() {
+    async function handleUpload() {
         const file = document.getElementById('fileInput').files[0];
         const name = document.getElementById('clientName').value;
-        
-        if(!file || !name) return alert("يرجى إكمال البيانات أيها المتدربون");
+        const btn = document.getElementById('uploadBtn');
 
-        const btn = document.getElementById('mainBtn');
+        if (!file || !name) return alert("أيها المتدربون، أكملوا البيانات أولاً");
+
         btn.disabled = true;
-        btn.innerText = "جاري الرفع...";
+        btn.innerText = "جاري المعالجة...";
 
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
-        // لضمان عدم حدوث خطأ المعاينة السابق
-        formData.append('resource_type', 'auto'); 
+        // نستخدم resource_type: 'auto' لضمان قبول الـ PDF
+        formData.append('resource_type', 'auto');
 
         try {
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { 
-                method: 'POST', 
-                body: formData 
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+                method: 'POST',
+                body: formData
             });
-            const data = await res.json();
-            
-            if (data.secure_url) {
-                await db.ref('orders').push().set({ client: name, fileURL: data.secure_url });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // حفظ في فايربيس
+                await db.ref('orders').push({
+                    client: name,
+                    fileURL: result.secure_url,
+                    timestamp: Date.now()
+                });
                 alert("تم الرفع بنجاح أيها المتدربون");
                 location.reload();
             } else {
-                alert("خطأ: " + data.error.message);
+                console.error(result);
+                alert("خطأ من السحابة: " + (result.error ? result.error.message : "فشل الرفع"));
             }
-        } catch (e) {
-            alert("حدث خطأ أثناء الرفع");
+        } catch (error) {
+            console.error(error);
+            alert("فشل الاتصال: تأكدوا من جودة الإنترنت أيها المتدربون");
         } finally {
             btn.disabled = false;
+            btn.innerText = "🚀 رفع ومعالجة الآن";
         }
     }
 
+    // جلب البيانات
     db.ref('orders').on('value', snap => {
         const tbody = document.getElementById('dataTable');
         tbody.innerHTML = '';
         snap.forEach(child => {
-            const item = child.val();
+            const data = child.val();
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${item.client}</strong></td>
-                    <td><button class="action-link" onclick="showStatus('${item.fileURL}')">👁️ معاينة وطباعة</button></td>
-                    <td><button class="delete-btn" onclick="deleteItem('${child.key}')">🗑️</button></td>
-                </tr>`;
+                    <td>${data.client}</td>
+                    <td><button class="preview-btn" onclick="window.open('${data.fileURL}', '_blank')">👁️ فتح</button></td>
+                    <td><button class="delete-btn" onclick="db.ref('orders/${child.key}').remove()">🗑️</button></td>
+                </tr>
+            `;
         });
     });
-
-    function deleteItem(key) {
-        if(confirm("هل تريد حذف هذا الملف؟")) {
-            db.ref('orders/' + key).remove();
-        }
-    }
-
-    function showStatus(url) {
-        currentFileUrl = url;
-        document.getElementById('modalInfo').innerText = url;
-        document.getElementById('statusModal').style.display = 'flex';
-    }
-
-    function closeModal() { document.getElementById('statusModal').style.display = 'none'; }
-
-    function openAndClose() {
-        window.open(currentFileUrl, '_blank');
-        closeModal();
-    }
 </script>
-
 </body>
 </html>
