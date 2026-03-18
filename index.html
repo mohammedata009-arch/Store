@@ -1,24 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>نظام رفع الملفات الذكي</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    background:#f1f5f9;
+    padding:20px;
+}
+
+.box {
+    max-width:750px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+h2 { text-align:center; }
+
+input, button {
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:8px;
+}
+
+button {
+    background:#2563eb;
+    color:white;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover { background:#1d4ed8; }
+
+#status {
+    margin-top:15px;
+    padding:10px;
+    border-radius:8px;
+    display:none;
+    white-space:pre-line;
+}
+
+.success { background:#dcfce7; color:#166534; }
+.error { background:#fee2e2; color:#991b1b; }
+.loading { background:#e0f2fe; color:#075985; }
+
+table {
+    width:100%;
+    margin-top:20px;
+    border-collapse: collapse;
+}
+
+td, th {
+    padding:10px;
+    text-align:center;
+    border-bottom:1px solid #ddd;
+}
+
+a {
+    text-decoration:none;
+    color:#2563eb;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>📂 نظام رفع PDF الذكي</h2>
+
+<input type="text" id="name" placeholder="اسم العميل">
+<input type="file" id="file" accept="application/pdf">
+
+<button onclick="upload()">🚀 رفع الملف</button>
+
+<div id="status"></div>
+
+<table>
+<thead>
+<tr>
+<th>الاسم</th>
+<th>الملف</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="data"></tbody>
+</table>
+
+</div>
+
 <script>
+
+// Firebase
+const firebaseConfig = {
+apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
+authDomain: "store-project-b023e.firebaseapp.com",
+databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
+projectId: "store-project-b023e",
+appId: "1:561530737705:web:beefb32c081f9bf8b53838"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Cloudinary
+const CLOUD_NAME = "djygvtpb2";
+const PRESET = "tahamm";
+
+// عرض الحالة
+function showStatus(message, type){
+let box = document.getElementById("status");
+box.style.display="block";
+box.className = type;
+box.innerText = message;
+}
+
+// رفع
 async function upload(){
 
 let name = document.getElementById("name").value;
 let file = document.getElementById("file").files[0];
 
 if(!name || !file){
-    alert("⚠️ المشكلة: بيانات ناقصة\n\n✅ الحل: اكتب الاسم واختر ملف PDF");
-    return;
+showStatus("⚠️ المشكلة: بيانات ناقصة\n\n✅ الحل: اكتب الاسم واختر ملف PDF","error");
+return;
 }
 
-// تحقق نوع الملف
 if(file.type !== "application/pdf"){
-    alert("⚠️ المشكلة: الملف ليس PDF\n\n✅ الحل: اختر ملف بصيغة PDF فقط");
-    return;
+showStatus("⚠️ المشكلة: الملف ليس PDF\n\n✅ الحل: اختر ملف بصيغة PDF فقط","error");
+return;
 }
 
 let formData = new FormData();
 formData.append("file", file);
 formData.append("upload_preset", PRESET);
 formData.append("resource_type", "auto");
+
+showStatus("⏳ جاري رفع الملف...","loading");
 
 try{
 
@@ -29,23 +160,22 @@ body:formData
 
 let data = await res.json();
 
-// 🔥 تحليل الخطأ
 if(!res.ok){
 
 let msg = data.error?.message || "";
 
-// تحليل ذكي
+// تحليل الخطأ
 if(msg.includes("preset")){
-    alert("❌ المشكلة: Upload Preset غير صحيح\n\n✅ الحل:\nاذهب إلى Cloudinary → Settings → Upload\nوتأكد أن preset اسمه (tahamm) ومفعل unsigned");
+showStatus("❌ المشكلة: Upload Preset غير صحيح\n\n✅ الحل:\nاذهب إلى Cloudinary → Settings → Upload\nوتأكد أن preset (tahamm) مفعّل unsigned","error");
 }
 else if(msg.includes("cloud_name")){
-    alert("❌ المشكلة: Cloud Name خطأ\n\n✅ الحل: تأكد من اسم الحساب في Cloudinary");
+showStatus("❌ المشكلة: Cloud Name خطأ\n\n✅ الحل: تأكد من اسم حساب Cloudinary","error");
 }
 else if(msg.includes("File size")){
-    alert("❌ المشكلة: الملف كبير جدًا\n\n✅ الحل: قلل حجم الملف أو ارفع الحد من Cloudinary");
+showStatus("❌ المشكلة: الملف كبير\n\n✅ الحل: قلل الحجم أو عدل الإعدادات","error");
 }
 else{
-    alert("❌ خطأ من Cloudinary:\n" + msg);
+showStatus("❌ خطأ من Cloudinary:\n"+msg,"error");
 }
 
 return;
@@ -57,21 +187,56 @@ name:name,
 url:data.secure_url
 });
 
-alert("✅ تم الرفع بنجاح");
+showStatus("✅ تم الرفع بنجاح","success");
 
 document.getElementById("name").value="";
 document.getElementById("file").value="";
 
 }catch(e){
 
-// 🔥 تحليل أخطاء الشبكة
 if(e.message.includes("Failed to fetch")){
-    alert("❌ المشكلة: لا يوجد اتصال أو خطأ CORS\n\n✅ الحل:\n- تأكد من الإنترنت\n- أو جرب من متصفح Chrome\n- أو تأكد أن الموقع HTTPS");
+showStatus("❌ المشكلة: اتصال أو CORS\n\n✅ الحل:\n- تأكد من الإنترنت\n- افتح الموقع عبر HTTPS\n- جرب Chrome","error");
 }
 else{
-    alert("❌ خطأ غير متوقع:\n" + e.message);
+showStatus("❌ خطأ غير متوقع:\n"+e.message,"error");
 }
 
 }
+
 }
+
+// عرض البيانات
+db.ref("files").on("value", snap=>{
+let table = document.getElementById("data");
+table.innerHTML="";
+
+snap.forEach(child=>{
+let d = child.val();
+
+table.innerHTML += `
+<tr>
+<td>${d.name}</td>
+
+<td>
+<a href="${d.url}" target="_blank">فتح</a> |
+<a href="${d.url}" download>تحميل</a>
+</td>
+
+<td>
+<button onclick="del('${child.key}')">🗑️</button>
+</td>
+
+</tr>
+`;
+});
+});
+
+// حذف
+function del(id){
+db.ref("files/"+id).remove();
+}
+
 </script>
+
+</body>
+</html>
