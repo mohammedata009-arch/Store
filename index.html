@@ -1,151 +1,26 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>نظام إدارة الملفات الاحترافي</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-<style>
-body {
-    font-family: 'Segoe UI';
-    background: linear-gradient(135deg,#e0f2fe,#f8fafc);
-    padding: 20px;
-}
-
-.main-card {
-    max-width: 900px;
-    margin: auto;
-    background: white;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-}
-
-h1 { text-align:center; color:#1e3a8a; }
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-input {
-    padding: 12px;
-    border-radius: 10px;
-    border: 2px solid #e2e8f0;
-}
-
-button {
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    background: #2563eb;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-button:hover { background:#1d4ed8; }
-
-.search {
-    margin-top:20px;
-    width:100%;
-}
-
-table {
-    width:100%;
-    margin-top:20px;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
-    text-align:center;
-}
-
-.file-link {
-    display:inline-block;
-    margin:3px;
-    padding:6px 10px;
-    background:#eff6ff;
-    border-radius:6px;
-    text-decoration:none;
-    color:#2563eb;
-    font-weight:bold;
-}
-
-.delete-btn {
-    background:none;
-    border:none;
-    color:red;
-    font-size:18px;
-    cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div class="main-card">
-
-<h1>📂 مركز إدارة الملفات</h1>
-
-<div class="input-group">
-    <input type="text" id="clientName" placeholder="اسم العميل">
-    <input type="file" id="fileInput" accept="application/pdf">
-    <button onclick="uploadSystem()">🚀 رفع الملف</button>
-</div>
-
-<input type="text" id="searchInput" class="search" placeholder="🔍 ابحث عن عميل...">
-
-<table>
-<thead>
-<tr>
-<th>العميل</th>
-<th>الملف</th>
-<th>التاريخ</th>
-<th>حذف</th>
-</tr>
-</thead>
-
-<tbody id="tableBody"></tbody>
-</table>
-
-</div>
-
 <script>
-// Firebase
-const firebaseConfig = {
-apiKey: "YOUR_KEY",
-authDomain: "YOUR_DOMAIN",
-databaseURL: "YOUR_DB",
-projectId: "YOUR_ID",
-appId: "YOUR_APP"
-};
+async function upload(){
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+let name = document.getElementById("name").value;
+let file = document.getElementById("file").files[0];
 
-// Cloudinary
-const CLOUD_NAME = "djygvtpb2";
-const UPLOAD_PRESET = "tahamm";
+if(!name || !file){
+    alert("⚠️ المشكلة: بيانات ناقصة\n\n✅ الحل: اكتب الاسم واختر ملف PDF");
+    return;
+}
 
-// رفع الملف
-async function uploadSystem() {
-
-let file = fileInput.files[0];
-let name = clientName.value;
-
-if(!file || !name) return alert("املأ البيانات");
+// تحقق نوع الملف
+if(file.type !== "application/pdf"){
+    alert("⚠️ المشكلة: الملف ليس PDF\n\n✅ الحل: اختر ملف بصيغة PDF فقط");
+    return;
+}
 
 let formData = new FormData();
-formData.append('file', file);
-formData.append('upload_preset', UPLOAD_PRESET);
+formData.append("file", file);
+formData.append("upload_preset", PRESET);
+formData.append("resource_type", "auto");
+
+try{
 
 let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
 method:"POST",
@@ -154,65 +29,49 @@ body:formData
 
 let data = await res.json();
 
-await db.ref("orders").push({
-client:name,
-fileURL:data.secure_url,
-time:new Date().toLocaleString()
-});
+// 🔥 تحليل الخطأ
+if(!res.ok){
 
-clientName.value="";
-fileInput.value="";
+let msg = data.error?.message || "";
+
+// تحليل ذكي
+if(msg.includes("preset")){
+    alert("❌ المشكلة: Upload Preset غير صحيح\n\n✅ الحل:\nاذهب إلى Cloudinary → Settings → Upload\nوتأكد أن preset اسمه (tahamm) ومفعل unsigned");
+}
+else if(msg.includes("cloud_name")){
+    alert("❌ المشكلة: Cloud Name خطأ\n\n✅ الحل: تأكد من اسم الحساب في Cloudinary");
+}
+else if(msg.includes("File size")){
+    alert("❌ المشكلة: الملف كبير جدًا\n\n✅ الحل: قلل حجم الملف أو ارفع الحد من Cloudinary");
+}
+else{
+    alert("❌ خطأ من Cloudinary:\n" + msg);
 }
 
-// عرض البيانات
-let allData = [];
-
-db.ref("orders").on("value", snap=>{
-allData = [];
-snap.forEach(child=>{
-allData.push({id:child.key,...child.val()});
-});
-render(allData.reverse());
-});
-
-// عرض الجدول
-function render(data){
-let tbody = document.getElementById("tableBody");
-tbody.innerHTML="";
-
-data.forEach(d=>{
-tbody.innerHTML += `
-<tr>
-<td>${d.client}</td>
-
-<td>
-<a href="${d.fileURL}" target="_blank" class="file-link">فتح</a>
-<a href="${d.fileURL}" download="${d.client}.pdf" class="file-link">تحميل</a>
-</td>
-
-<td>${d.time}</td>
-
-<td>
-<button class="delete-btn" onclick="deleteItem('${d.id}')">🗑️</button>
-</td>
-</tr>
-`;
-});
+return;
 }
 
-// حذف
-function deleteItem(id){
-db.ref("orders/"+id).remove();
-}
-
-// البحث
-searchInput.addEventListener("input", ()=>{
-let val = searchInput.value.toLowerCase();
-let filtered = allData.filter(d=>d.client.toLowerCase().includes(val));
-render(filtered);
+// حفظ Firebase
+await db.ref("files").push({
+name:name,
+url:data.secure_url
 });
 
+alert("✅ تم الرفع بنجاح");
+
+document.getElementById("name").value="";
+document.getElementById("file").value="";
+
+}catch(e){
+
+// 🔥 تحليل أخطاء الشبكة
+if(e.message.includes("Failed to fetch")){
+    alert("❌ المشكلة: لا يوجد اتصال أو خطأ CORS\n\n✅ الحل:\n- تأكد من الإنترنت\n- أو جرب من متصفح Chrome\n- أو تأكد أن الموقع HTTPS");
+}
+else{
+    alert("❌ خطأ غير متوقع:\n" + e.message);
+}
+
+}
+}
 </script>
-
-</body>
-</html>
