@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام إدارة الخدمات - الحل الذكي للمعاينة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الخدمات - نسخة مفتوحة</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -12,7 +13,6 @@
         .header { text-align: center; border-bottom: 2px solid #e2e8f0; margin-bottom: 25px; padding-bottom: 15px; }
         .header h2 { color: var(--primary); margin: 0; }
         
-        /* تصميم النافذة المنبثقة (Modal) */
         #statusModal { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; 
@@ -23,18 +23,18 @@
         }
         
         .input-group { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 25px; }
-        input[type="text"] { flex: 2; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+        input[type="text"] { flex: 2; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; width: 100%; }
         .btn { padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
         .btn-upload { background-color: var(--primary); color: white; }
         .btn-file { background-color: #64748b; color: white; }
         
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
         th { background-color: #f8fafc; color: #64748b; font-weight: 600; }
         
         .action-link { 
             display: inline-block; padding: 8px 16px; background: #e0f2fe; color: #0369a1; 
-            text-decoration: none; border-radius: 8px; font-weight: bold; margin: 2px;
+            text-decoration: none; border-radius: 8px; font-weight: bold; cursor: pointer; border: none;
         }
         .delete-btn { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 1.3em; }
     </style>
@@ -44,22 +44,22 @@
 <div class="container">
     <div class="header">
         <h2>نظام إدارة الخدمات والطباعة</h2>
-        <p>مرحباً بكم أيها المتدربون في واجهة التحكم</p>
+        <p>أيها المتدربون، النظام متاح الآن للاستخدام المباشر</p>
     </div>
 
     <div class="input-group">
         <input type="text" id="clientName" placeholder="اسم العميل المستلم...">
-        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="document.getElementById('fileLabel').innerText='تم اختيار: ' + this.files[0].name">
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none" onchange="updateFileName()">
         <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">📎 <span id="fileLabel">اختيار ملف PDF</span></button>
-        <button id="mainBtn" class="btn btn-upload" onclick="processOrder()">🚀 رفع ومعالجة</button>
+        <button id="mainBtn" class="btn btn-upload" onclick="processOrder()">🚀 رفع ومعالجة الملف</button>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>العميل</th>
+                <th>اسم العميل</th>
                 <th>إدارة الملف</th>
-                <th>حذف</th>
+                <th>إجراء</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
@@ -69,12 +69,10 @@
 <div id="statusModal">
     <div class="modal-content">
         <h3 style="color: var(--primary);">معاينة وتخزين الملف</h3>
-        <p style="font-size: 0.9em; color: #475569;">
-            أيها المتدربون، الملف مخزن سحابياً على خوادم <strong>Cloudinary</strong> لضمان السرعة.
-        </p>
-        <div id="modalInfo" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-size: 0.8em; color: #0369a1;"></div>
-        <button class="btn btn-upload" style="width: 100%;" onclick="openAndClose()">فتح المعاينة الآن</button>
-        <button class="btn" style="margin-top: 10px; color: #64748b;" onclick="closeModal()">إغلاق</button>
+        <p style="font-size: 0.9em; color: #475569;">أيها المتدربون، الملف جاهز الآن للعرض.</p>
+        <div id="modalInfo" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-size: 0.8em; color: #0369a1; direction: ltr;"></div>
+        <button class="btn btn-upload" style="width: 100%;" onclick="openAndClose()">فتح المعاينة والطباعة</button>
+        <button class="btn" style="margin-top: 10px; color: #64748b;" onclick="closeModal()">إلغاء</button>
     </div>
 </div>
 
@@ -94,28 +92,48 @@
     const UPLOAD_PRESET = "tahamm";
     let currentFileUrl = "";
 
-    // وظيفة الرفع
+    function updateFileName() {
+        const file = document.getElementById('fileInput').files[0];
+        if(file) document.getElementById('fileLabel').innerText = "تم اختيار: " + file.name;
+    }
+
     async function processOrder() {
         const file = document.getElementById('fileInput').files[0];
         const name = document.getElementById('clientName').value;
+        
         if(!file || !name) return alert("يرجى إكمال البيانات أيها المتدربون");
 
-        document.getElementById('mainBtn').disabled = true;
+        const btn = document.getElementById('mainBtn');
+        btn.disabled = true;
+        btn.innerText = "جاري الرفع...";
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', UPLOAD_PRESET);
+        // لضمان عدم حدوث خطأ المعاينة السابق
+        formData.append('resource_type', 'auto'); 
 
         try {
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: 'POST', body: formData });
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { 
+                method: 'POST', 
+                body: formData 
+            });
             const data = await res.json();
+            
             if (data.secure_url) {
                 await db.ref('orders').push().set({ client: name, fileURL: data.secure_url });
-                location.reload(); // تحديث لضمان ظهور البيانات
+                alert("تم الرفع بنجاح أيها المتدربون");
+                location.reload();
+            } else {
+                alert("خطأ: " + data.error.message);
             }
-        } catch (e) { alert("خطأ في الاتصال"); }
+        } catch (e) {
+            alert("حدث خطأ أثناء الرفع");
+        } finally {
+            btn.disabled = false;
+        }
     }
 
-    // عرض البيانات
     db.ref('orders').on('value', snap => {
         const tbody = document.getElementById('dataTable');
         tbody.innerHTML = '';
@@ -124,16 +142,21 @@
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${item.client}</strong></td>
-                    <td><button class="action-link" style="border:none; cursor:pointer;" onclick="showStatus('${item.fileURL}')">👁️ معاينة وطباعة</button></td>
-                    <td><button class="delete-btn" onclick="db.ref('orders/${child.key}').remove()">🗑️</button></td>
+                    <td><button class="action-link" onclick="showStatus('${item.fileURL}')">👁️ معاينة وطباعة</button></td>
+                    <td><button class="delete-btn" onclick="deleteItem('${child.key}')">🗑️</button></td>
                 </tr>`;
         });
     });
 
-    // التحكم في نافذة المعاينة
+    function deleteItem(key) {
+        if(confirm("هل تريد حذف هذا الملف؟")) {
+            db.ref('orders/' + key).remove();
+        }
+    }
+
     function showStatus(url) {
         currentFileUrl = url;
-        document.getElementById('modalInfo').innerText = "رابط التخزين السحابي:\n" + url;
+        document.getElementById('modalInfo').innerText = url;
         document.getElementById('statusModal').style.display = 'flex';
     }
 
@@ -144,5 +167,6 @@
         closeModal();
     }
 </script>
+
 </body>
 </html>
