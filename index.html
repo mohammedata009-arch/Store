@@ -1,241 +1,104 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>نظام رفع الملفات الذكي</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-<style>
-body {
-    font-family: Arial;
-    background:#f1f5f9;
-    padding:20px;
-}
-
-.box {
-    max-width:750px;
-    margin:auto;
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.1);
-}
-
-h2 { text-align:center; }
-
-input, button {
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border-radius:8px;
-}
-
-button {
-    background:#2563eb;
-    color:white;
-    border:none;
-    font-weight:bold;
-    cursor:pointer;
-}
-
-button:hover { background:#1d4ed8; }
-
-#status {
-    margin-top:15px;
-    padding:10px;
-    border-radius:8px;
-    display:none;
-    white-space:pre-line;
-}
-
-.success { background:#dcfce7; color:#166534; }
-.error { background:#fee2e2; color:#991b1b; }
-.loading { background:#e0f2fe; color:#075985; }
-
-table {
-    width:100%;
-    margin-top:20px;
-    border-collapse: collapse;
-}
-
-td, th {
-    padding:10px;
-    text-align:center;
-    border-bottom:1px solid #ddd;
-}
-
-a {
-    text-decoration:none;
-    color:#2563eb;
-    font-weight:bold;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة المتدربين لرفع الملفات</title>
+    <style>
+        :root { --main-color: #3ecf8e; --bg-color: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        .upload-section { border: 2px dashed var(--main-color); padding: 20px; text-align: center; border-radius: 8px; background: #f9fffb; margin-bottom: 25px; }
+        button { background: var(--main-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:disabled { background: #ccc; }
+        #fileList { list-style: none; padding: 0; margin-top: 20px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; background: #fff; margin-bottom: 5px; border-radius: 4px; }
+        .file-item a { color: #007bff; text-decoration: none; font-weight: bold; }
+        #status { font-size: 14px; margin-top: 10px; color: #666; }
+    </style>
 </head>
-
 <body>
 
-<div class="box">
+<div class="container">
+    <h2>مركز رفع ملفات المتدربين</h2>
+    
+    <div class="upload-section">
+        <input type="file" id="pdfFile" accept=".pdf">
+        <button id="uploadBtn" onclick="uploadFile()">رفع الملف الآن</button>
+        <div id="status"></div>
+    </div>
 
-<h2>📂 نظام رفع PDF الذكي</h2>
-
-<input type="text" id="name" placeholder="اسم العميل">
-<input type="file" id="file" accept="application/pdf">
-
-<button onclick="upload()">🚀 رفع الملف</button>
-
-<div id="status"></div>
-
-<table>
-<thead>
-<tr>
-<th>الاسم</th>
-<th>الملف</th>
-<th>حذف</th>
-</tr>
-</thead>
-<tbody id="data"></tbody>
-</table>
-
+    <h3>الملفات المتاحة للجميع:</h3>
+    <div id="fileList">جاري تحميل القائمة...</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+    // بيانات مشروعك (استبدل المفتاح العام فقط)
+    const SUPABASE_URL = 'https://hsqslvtoofhcuzxmswkh.supabase.co';
+    const SUPABASE_KEY = 'ضـع_مفـتاح_ANON_الخاص_بـك_هنـا'; 
 
-// Firebase
-const firebaseConfig = {
-apiKey: "AIzaSyAYJwvrBLc_svZ2icW8zrBbKrFyg1METn0",
-authDomain: "store-project-b023e.firebaseapp.com",
-databaseURL: "https://store-project-b023e-default-rtdb.firebaseio.com",
-projectId: "store-project-b023e",
-appId: "1:561530737705:web:beefb32c081f9bf8b53838"
-};
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    // دالة لجلب الملفات وعرضها عند فتح الصفحة
+    async function loadFiles() {
+        const { data, error } = await supabase.storage.from('pdfs').list();
+        const listDiv = document.getElementById('fileList');
+        
+        if (error) {
+            listDiv.innerHTML = "خطأ في جلب الملفات. تأكد من إعداد الـ Policies.";
+            return;
+        }
 
-// Cloudinary
-const CLOUD_NAME = "djygvtpb2";
-const PRESET = "tahamm";
+        if (data.length === 0) {
+            listDiv.innerHTML = "لا توجد ملفات مرفوعة حالياً.";
+            return;
+        }
 
-// عرض الحالة
-function showStatus(message, type){
-let box = document.getElementById("status");
-box.style.display="block";
-box.className = type;
-box.innerText = message;
-}
+        listDiv.innerHTML = '';
+        data.forEach(file => {
+            const { data: urlData } = supabase.storage.from('pdfs').getPublicUrl(file.name);
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <span>${file.name}</span>
+                <a href="${urlData.publicUrl}" target="_blank">تحميل PDF</a>
+            `;
+            listDiv.appendChild(item);
+        });
+    }
 
-// رفع
-async function upload(){
+    // دالة الرفع
+    async function uploadFile() {
+        const fileInput = document.getElementById('pdfFile');
+        const btn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const file = fileInput.files[0];
 
-let name = document.getElementById("name").value;
-let file = document.getElementById("file").files[0];
+        if (!file) return alert("الرجاء اختيار ملف أولاً");
 
-if(!name || !file){
-showStatus("⚠️ المشكلة: بيانات ناقصة\n\n✅ الحل: اكتب الاسم واختر ملف PDF","error");
-return;
-}
+        btn.disabled = true;
+        status.innerText = "جاري الرفع... يرجى الانتظار";
 
-if(file.type !== "application/pdf"){
-showStatus("⚠️ المشكلة: الملف ليس PDF\n\n✅ الحل: اختر ملف بصيغة PDF فقط","error");
-return;
-}
+        // الرفع لمجلد pdfs
+        const { data, error } = await supabase.storage
+            .from('pdfs')
+            .upload(`${Date.now()}_${file.name}`, file);
 
-let formData = new FormData();
-formData.append("file", file);
-formData.append("upload_preset", PRESET);
-formData.append("resource_type", "auto");
+        if (error) {
+            alert("فشل الرفع: " + error.message);
+        } else {
+            status.innerText = "تم الرفع بنجاح!";
+            loadFiles(); // تحديث القائمة فوراً
+        }
+        btn.disabled = false;
+        fileInput.value = '';
+    }
 
-showStatus("⏳ جاري رفع الملف...","loading");
-
-try{
-
-let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-method:"POST",
-body:formData
-});
-
-let data = await res.json();
-
-if(!res.ok){
-
-let msg = data.error?.message || "";
-
-// تحليل الخطأ
-if(msg.includes("preset")){
-showStatus("❌ المشكلة: Upload Preset غير صحيح\n\n✅ الحل:\nاذهب إلى Cloudinary → Settings → Upload\nوتأكد أن preset (tahamm) مفعّل unsigned","error");
-}
-else if(msg.includes("cloud_name")){
-showStatus("❌ المشكلة: Cloud Name خطأ\n\n✅ الحل: تأكد من اسم حساب Cloudinary","error");
-}
-else if(msg.includes("File size")){
-showStatus("❌ المشكلة: الملف كبير\n\n✅ الحل: قلل الحجم أو عدل الإعدادات","error");
-}
-else{
-showStatus("❌ خطأ من Cloudinary:\n"+msg,"error");
-}
-
-return;
-}
-
-// حفظ Firebase
-await db.ref("files").push({
-name:name,
-url:data.secure_url
-});
-
-showStatus("✅ تم الرفع بنجاح","success");
-
-document.getElementById("name").value="";
-document.getElementById("file").value="";
-
-}catch(e){
-
-if(e.message.includes("Failed to fetch")){
-showStatus("❌ المشكلة: اتصال أو CORS\n\n✅ الحل:\n- تأكد من الإنترنت\n- افتح الموقع عبر HTTPS\n- جرب Chrome","error");
-}
-else{
-showStatus("❌ خطأ غير متوقع:\n"+e.message,"error");
-}
-
-}
-
-}
-
-// عرض البيانات
-db.ref("files").on("value", snap=>{
-let table = document.getElementById("data");
-table.innerHTML="";
-
-snap.forEach(child=>{
-let d = child.val();
-
-table.innerHTML += `
-<tr>
-<td>${d.name}</td>
-
-<td>
-<a href="${d.url}" target="_blank">فتح</a> |
-<a href="${d.url}" download>تحميل</a>
-</td>
-
-<td>
-<button onclick="del('${child.key}')">🗑️</button>
-</td>
-
-</tr>
-`;
-});
-});
-
-// حذف
-function del(id){
-db.ref("files/"+id).remove();
-}
-
+    // تشغيل الجلب عند فتح الصفحة
+    loadFiles();
 </script>
 
 </body>
